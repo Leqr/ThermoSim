@@ -16,15 +16,16 @@
 
 class Simulator {
     private:
+    int pushTimeStep = 10;
     std::unordered_map<std::string, double> durations;
     double height;
     double diameter;
     int nCells;
     double T0;
     int nCycles;
-    int nTimeStepsCycle;
     std::string state;
     Exporter& exporter;
+    int nTimeStepsCycle;
     double alphaF;
     double alphaS;
     double uf;
@@ -32,8 +33,7 @@ class Simulator {
     public:
     std::string getState();
     void simulate();
-    void solveNonCoupledAdvDiffFluid();
-    void solveNonCoupledDiffSolid();
+    void solveNonCoupledDiff(bool MMS = false);
     Simulator(std::unordered_map<std::string, double> durations,
               double height,
               double diameter,

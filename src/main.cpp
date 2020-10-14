@@ -56,6 +56,7 @@ void testReader(){
 
 int main(){
     
+    //parameters for the simulation
     double height;
     double diameter;
     int nCells;
@@ -66,9 +67,8 @@ int main(){
     double alphaF;
     double alphaS;
     double uf;
-
     
-    //ask the user for the parameters
+    //open the setup.txt file
     std::ifstream setup;
     setup.open("../../src/setup.txt");
     if( !setup.is_open()) {
@@ -76,6 +76,7 @@ int main(){
        exit(1);
     }
     
+    //read the parameters
     std::string line;
     int k = 1;
     while(getline(setup, line)){
@@ -122,52 +123,11 @@ int main(){
         }
         k += 1;
     }
-    
-    /*
-    std::cout << "Enter the height :" << std::endl;
-    std::cin >> height ;
-    
-    std::cout << "Enter the diameter :" << std::endl;
-    std::cin >> diameter ;
-    
-    std::cout << "Enter the number of cells :" << std::endl;
-    std::cin >> nCells ;
-    
-    std::cout << "Enter the initial temperature :" << std::endl;
-    std::cin >> T0 ;
-    
-    
-    std::cout << "Enter the charging state duration :" << std::endl;
-    std::cin >> durations["charging"] ;
-    
-    std::cout << "Enter the idle charging-discharging state duration :" << std::endl;
-    std::cin >> durations["idlecd"] ;
-    
-    std::cout << "Enter the discharging state time :" << std::endl;
-    std::cin >> durations["discharging"] ;
-    
-    std::cout << "Enter the idle discharging-charging state time :" << std::endl;
-    std::cin >> durations["idledc"] ;
-    
-    
-    std::cout << "Enter the number of cycles :" << std::endl;
-    std::cin >> nCycles ;
-    
-    std::cout << "Enter the number of time steps per cycle :" << std::endl;
-    std::cin >> nTimeStepsCycle ;
-    
-    std::cout << "Enter alphaF :" << std::endl;
-    std::cin >> alphaF ;
-    
-    std::cout << "Enter alphaS :" << std::endl;
-    std::cin >> alphaS ;
-    */
-    
+
     //initialize the time serie exporter
     Exporter exporter;
 
     //run the simulation
     Simulator sim(durations,height,diameter,nCells,T0,nCycles,nTimeStepsCycle,exporter,alphaF,alphaS,uf);
-    sim.solveNonCoupledAdvDiffFluid();
-    sim.solveNonCoupledDiffSolid();
+    sim.solveNonCoupledDiff(true);
 }

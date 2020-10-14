@@ -2,50 +2,58 @@ import matplotlib.pyplot as plt
 from matplotlib import animation
 import numpy as np
 
-#loading the solutions
-ffluid = open("../build/debug/fluid.txt")
+def plotMov(nCells,nTimeStep,sol):
+    #animation of the solution
 
-solsf = []
+    fig = plt.figure()
+    ax = plt.axes(xlim=(0, nCells),ylim = (0,900))
+    line, = ax.plot([], [], lw=2)
 
-for line in ffluid:
-    a = line.strip().split(',')
-    af = []
-    for val in a:
-        af.append(float(val))
-    solsf.append(af)
+    def ini():
+        line.set_data([], [])
+        return line,
 
-fsolid = open("../build/debug/solid.txt")
+    # animation function.  This is called sequentially
+    def animate(i):
+        x = np.linspace(1, nCells, nCells)
+        y = sol[i]
+        line.set_data(x, y)
+        return line,
 
-solss = []
-
-for line in fsolid:
-    a = line.strip().split(',')
-    af = []
-    for val in a:
-        af.append(float(val))
-    solss.append(af)
+    # call the animator.  blit=True means only re-draw the parts that have changed.
+    anim = animation.FuncAnimation(fig, animate, init_func=ini,
+                                   frames=nTimeStep, interval=5,blit = True)
+    plt.show()
 
 
-#animation of the solution
-nCells = 100
-nTimeStep = 1000
 
-fig = plt.figure()
-ax = plt.axes(xlim=(0, nCells),ylim = (0,900))
-line, = ax.plot([], [], lw=2)
+if __name__ == "__main__":
 
-def ini():
-    line.set_data([], [])
-    return line,
+    #loading the solutions
+    ffluid = open("../build/debug/fluid.txt")
 
-# animation function.  This is called sequentially
-def animate(i):
-    x = np.linspace(1, nCells, nCells)
-    y = solss[i]
-    line.set_data(x, y)
-    return line,
+    solsf = []
 
-# call the animator.  blit=True means only re-draw the parts that have changed.
-anim = animation.FuncAnimation(fig, animate, init_func=ini,
-                               frames=nTimeStep, interval=5,blit = True)
+    for line in ffluid:
+        a = line.strip().split(',')
+        af = []
+        for val in a:
+            af.append(float(val))
+        solsf.append(af)
+
+    fsolid = open("../build/debug/solid.txt")
+
+    solss = []
+
+    for line in fsolid:
+        a = line.strip().split(',')
+        af = []
+        for val in a:
+            af.append(float(val))
+        solss.append(af)
+
+#plotMov(100,10000,solsf)#
+k = 2*np.pi*1/10
+error = np.absolute([np.cos(k*val) for val in np.linspace(0,10,100)]-solss[-1])
+plt.plot(solss[-1])
 plt.show()
