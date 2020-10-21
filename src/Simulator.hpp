@@ -34,6 +34,8 @@ class Simulator {
     std::string getState();
     void simulate();
     void solveNonCoupledDiff(bool MMS = false);
+    double L1Error(std::vector<double> numSol,std::vector<double> analySol);
+    double LinfError(std::vector<double> numSol,std::vector<double> analySol);
     Simulator(std::unordered_map<std::string, double> durations,
               double height,
               double diameter,

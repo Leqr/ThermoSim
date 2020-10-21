@@ -6,7 +6,7 @@ def plotMov(nCells,nTimeStep,sol):
     #animation of the solution
 
     fig = plt.figure()
-    ax = plt.axes(xlim=(0, nCells),ylim = (0,900))
+    ax = plt.axes(xlim=(0, nCells),ylim = (-5,5))
     line, = ax.plot([], [], lw=2)
 
     def ini():
@@ -25,7 +25,10 @@ def plotMov(nCells,nTimeStep,sol):
                                    frames=nTimeStep, interval=5,blit = True)
     plt.show()
 
-
+def MMS():
+    error = np.absolute([np.cos(k*val) for val in np.linspace(0,10,100)]-solss[-1])
+    plt.plot(solss[-1])
+    plt.show()
 
 if __name__ == "__main__":
 
@@ -52,8 +55,9 @@ if __name__ == "__main__":
             af.append(float(val))
         solss.append(af)
 
-#plotMov(100,10000,solsf)#
-k = 2*np.pi*1/10
-error = np.absolute([np.cos(k*val) for val in np.linspace(0,10,100)]-solss[-1])
-plt.plot(solss[-1])
+sol = solss
+#plotMov(32,len(sol),sol)
+plt.plot(sol[-1])
+#plt.plot([np.cos(2*3.14*4/10*x) for x in np.linspace(0,10,8)],label = "cos")
+plt.legend()
 plt.show()
