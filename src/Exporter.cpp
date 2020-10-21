@@ -70,6 +70,16 @@ void Exporter::pushSolid(std::vector<double> solidtemp){
     solidtempdata << std::endl;
 }
 
+void Exporter::pushOVS(std::vector<double> l){
+    for(int j=0; j < int(l.size()); j++){
+        ovsdata << l[j];
+        if(j != int(l.size())-1){
+            ovsdata << ",";
+        }
+    }
+    ovsdata << std::endl;
+}
+
 Exporter::Exporter(std::string outFile,std::string stateFile):outFile(outFile),stateFile(stateFile)
 {
     outdata.open(outFile);
@@ -95,6 +105,12 @@ Exporter::Exporter(std::string outFile,std::string stateFile):outFile(outFile),s
        std::cerr << "Error: file could not be opened" << std::endl;
        exit(1);
     }
+    
+    ovsdata.open("ovs.txt");
+    if( !ovsdata.is_open()) {
+       std::cerr << "Error: file could not be opened" << std::endl;
+       exit(1);
+    }
 }
 
 Exporter::~Exporter()
@@ -104,6 +120,7 @@ Exporter::~Exporter()
     outdatastate.close();
     fluidtempdata.close();
     solidtempdata.close();
+    ovsdata.close();
     
 }
 

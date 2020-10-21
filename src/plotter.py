@@ -6,7 +6,7 @@ def plotMov(nCells,nTimeStep,sol):
     #animation of the solution
 
     fig = plt.figure()
-    ax = plt.axes(xlim=(0, nCells),ylim = (-5,5))
+    ax = plt.axes(xlim=(0, nCells),ylim = (0,900))
     line, = ax.plot([], [], lw=2)
 
     def ini():
@@ -25,9 +25,83 @@ def plotMov(nCells,nTimeStep,sol):
                                    frames=nTimeStep, interval=5,blit = True)
     plt.show()
 
-def MMS():
-    error = np.absolute([np.cos(k*val) for val in np.linspace(0,10,100)]-solss[-1])
-    plt.plot(solss[-1])
+def OVSNC():
+    ovs = open("../Data/OVSNonCoupledwithLogBug/ovsNCn=1,Pe=1.txt")
+
+    ovsdata = []
+
+    for line in ovs:
+        a = line.strip().split(',')
+        af = []
+        for val in a:
+            af.append(float(val))
+        ovsdata.append(af)
+    '''
+    fig, axs = plt.subplots(2, 2)
+
+    axs[0, 0].plot([np.log(10/n) for n in [8,16,32,64,128,256,512]],[np.log(val) for val in ovsdata[2]], 'tab:green',marker=".")
+    axs[0, 0].set_title('L1 norm for Ts, n = 1')
+    axs[0, 0].set_ylabel('Log(E)')
+    axs[0, 0].set_xlabel('Log(h)')
+    axs[0, 0].set_ylim([-8,5])
+
+
+    axs[0, 1].plot([np.log(10/n) for n in [8,16,32,64,128,256,512]],[np.log(val) for val in ovsdata[3]], 'tab:orange',marker=".")
+    axs[0, 1].set_title('Linf norm for Ts, n = 1')
+    axs[0, 1].set_ylabel('Log(E)')
+    axs[0, 1].set_xlabel('Log(h)')
+    axs[0, 1].set_ylim([-8,5])
+
+    y = [np.log(np.abs((ovsdata[2][i+1]-ovsdata[2][i])/(ovsdata[2][i]-ovsdata[2][i-1])))/np.log(1/2) for i in range(1,len(ovsdata[2])-1)]
+    axs[1, 0].plot([np.log(10/n) for n in [16,32,64,128,256]],y ,'tab:green',marker=".")
+    axs[1, 0].set_ylabel('p')
+    axs[1, 0].set_xlabel('Log(h)')
+    axs[1, 0].set_ylim([0,5])
+
+    y2 = [np.log(np.abs((ovsdata[3][i+1]-ovsdata[3][i])/(ovsdata[3][i]-ovsdata[3][i-1])))/np.log(1/2) for i in range(1,len(ovsdata[3])-1)]
+
+    axs[1, 1].plot([np.log(10/n) for n in [16,32,64,128,256]],y2, 'tab:orange',marker=".")
+    axs[1, 1].set_ylabel('p')
+    axs[1, 1].set_xlabel('Log(h)')
+    axs[1, 1].set_ylim([0,5])
+
+
+    '''
+    fig, axs = plt.subplots(2, 2)
+
+    axs[0, 0].plot([np.log(10/n) for n in [8,16,32,64,128,256,512]],[np.log(val) for val in ovsdata[0]], 'tab:green',marker=".")
+    axs[0, 0].set_title('L1 norm for Tf, n = 1, Pe = 1')
+    axs[0, 0].set_ylabel('Log(E)')
+    axs[0, 0].set_xlabel('Log(h)')
+    axs[0, 0].set_ylim([-8,2])
+
+    axs[0, 1].plot([np.log(10/n) for n in [8,16,32,64,128,256,512]],[np.log(val) for val in ovsdata[1]], 'tab:orange',marker=".")
+    axs[0, 1].set_title('Linf norm for Tf, n = 1, Pe = 1')
+    axs[0, 1].set_ylabel('Log(E)')
+    axs[0, 1].set_xlabel('Log(h)')
+    axs[0, 1].set_ylim([-8,2])
+
+
+    y = [np.log(np.abs((ovsdata[0][i+1]-ovsdata[0][i])/(ovsdata[0][i]-ovsdata[0][i-1])))/np.log(1/2) for i in range(1,len(ovsdata[0])-1)]
+    axs[1, 0].plot([np.log(10/n) for n in [16,32,64,128,256]],y ,'tab:green',marker=".")
+    axs[1, 0].set_ylabel('p')
+    axs[1, 0].set_xlabel('Log(h)')
+    axs[1, 0].set_ylim([0,4])
+
+    y2 = [np.log(np.abs((ovsdata[1][i+1]-ovsdata[1][i])/(ovsdata[1][i]-ovsdata[1][i-1])))/np.log(1/2) for i in range(1,len(ovsdata[1])-1)]
+
+    axs[1, 1].plot([np.log(10/n) for n in [16,32,64,128,256]],y2, 'tab:orange',marker=".")
+    axs[1, 1].set_ylabel('p')
+    axs[1, 1].set_xlabel('Log(h)')
+    axs[1, 1].set_ylim([0,4])
+
+    plt.legend()
+    plt.show()
+
+def plotvscos(sol,ncells,n):
+    plt.plot(sol[-1])
+    plt.plot([np.cos(2*3.14*n/10*x) for x in np.linspace(0,10,ncells)],label = "cos")
+    plt.legend()
     plt.show()
 
 if __name__ == "__main__":
@@ -56,8 +130,7 @@ if __name__ == "__main__":
         solss.append(af)
 
 sol = solss
-#plotMov(32,len(sol),sol)
-plt.plot(sol[-1])
-#plt.plot([np.cos(2*3.14*4/10*x) for x in np.linspace(0,10,8)],label = "cos")
-plt.legend()
-plt.show()
+
+#plotMov(128,len(sol),sol)
+#plotvscos(sol,128,1)
+OVSNC()
