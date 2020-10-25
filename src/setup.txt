@@ -9,7 +9,7 @@ T0:
 nCycles:
 10
 nTimeStepsCycle:
-10000000
+400000
 charging state duration:
 50
 idle charging-discharging state duration:
@@ -19,8 +19,8 @@ discharging state duration:
 idle discharging-charging state duration:
 50
 alphaF:
-0.0333
+0.00333
 alphaS:
-5
+0.005
 uf:
-0.05
+0.00005

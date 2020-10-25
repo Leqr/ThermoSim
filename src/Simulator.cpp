@@ -14,8 +14,8 @@ std::string Simulator::getState(){
     return state;
 }
 
-void Simulator::simulate(){
-    
+void Simulator::simulate(bool MMS){
+    /*
     //timestep simulation of the program
     for(int i = 1; i < nTimeStepsCycle*nCycles; ++i){
         int val = i%nTimeStepsCycle;
@@ -33,23 +33,190 @@ void Simulator::simulate(){
             state = "idledc";
         }
         exporter.exportState(state);
+    }
+     */
+    
+    //initial temperature
+    std::vector<double> solf(nCells,T0);
+    std::vector<double> sols(nCells,T0);
+    std::vector<double> oldsols = sols;
+    std::vector<double> oldsolf = solf;
+    
+    Lbc = 500;
+    
+    //bool of ss attained, when both true the program stops
+    bool ss_fluid = false;
+    bool ss_solid = false;
+ 
+    if(MMS){
+        solf = std::vector<double>(nCells,0);
+        sols = std::vector<double>(nCells,0);
+    }
+    
+    checkStabCond();
+    
+    for(int i = 1; i < nTimeStepsCycle; ++i){
+                
+        //export every multiple of pushtimestep solution to a file
+        if (i%this->pushTimeStep == 0){
+            exporter.pushSolid(sols);
+            exporter.pushFluid(solf);
+        }
         
+        std::vector<double> oldsols = sols;
+        std::vector<double> oldsolf = solf;
+        
+        sols.clear();
+        solf.clear();
+        
+        auto vals = solveDiff(oldsols,oldsolf,MMS);
+        
+        sols = vals[0];
+        solf = vals[1];
+        
+        //check if steady state is attained
+        if(MMS){
+            
+            if ((ss_fluid == false) and (i%this->checkSteadyStateTimeStep)){
+                double err = 0;
+                for(int i = 0; i <nCells;++i){
+                    err += 1/dt * abs(solf[i]-oldsolf[i]);
+                }
+                err = 1.0/nCells*err;
+                if(err < errThreshold){
+                    std::cerr << "Steady state of fluid solution attained for threshold " << errThreshold << " after " << i << " timesteps." << std::endl;
+                    ss_fluid = true;
+                }
+            }
+            
+            if ((ss_solid == false) and (i%this->checkSteadyStateTimeStep)){
+                double err = 0;
+                for(int i = 0; i < nCells;++i){
+                    err += 1/dt * abs(sols[i]-oldsols[i]);
+                }
+                err = 1.0/nCells*err;
+                if(err < errThreshold){
+                    std::cerr << "Steady state of solid solution attained for threshold " << errThreshold << " after " << i << " timesteps." << std::endl;
+                    ss_solid = true;
+                }
+            }
+            //break out of the time step loop when steady state is attained for both solutions
+            if(ss_fluid and ss_solid){
+                break;
+            }
+        }
+
+    }
+    if(MMS){
+        std::vector<double> analyticSol;
+        for(int i = 0; i < nCells; ++i){
+            analyticSol.push_back(cos(k*dx*i));
+        }
+
+        std::cout <<"L1 error : " << L1Error(solf,analyticSol) << std::endl;
+        std::cout << "Linf error : " << LinfError(solf,analyticSol) << std::endl;
+    }
+    
+}
+
+void Simulator::checkStabCond(){
+    //check stability conditions
+    double sigma = uf*dt/dx;
+    double df = alphaF*dt/(dx*dx);
+    double ds = alphaS*dt/(dx*dx);
+    std::cout << "df : " << df << std::endl;
+    std::cout << "ds : " << ds << std::endl;
+    std::cout << "sigma : " << sigma << std::endl;
+    std::cout << std::endl;
+    
+    if (2*ds > 1){
+        std::cerr << "ds is too big, the method might not be stable"  << std::endl;
+    }
+    
+    if(sigma*sigma > sigma + 2*df){
+        std::cerr << "The method might not be stable (lower bound)"  << std::endl;
+        std::cout <<sigma*sigma << " " <<sigma + 2*df << std::endl;
+    }
+    
+    if(sigma + 2*df > 1){
+        std::cerr << "The method might not be stable (upper bound)"  << std::endl;
     }
 }
 
+std::vector<std::vector<double>> Simulator::solveDiff(std::vector<double> oldsols, std::vector<double> oldsolf, bool MMS,bool coupled){
+    
+    std::vector<double> solf;
+    std::vector<double> sols;
+
+    //Method of Manufactured solutions
+    double sources = 0;
+    double sourcef = 0;
+    //puts the right boundary conditions for the MMS
+    if(MMS){
+        Lbc = 1;
+    }
+
+    //over all space for each timestep
+    for(int j = 0; j<=nCells-1;++j){
+        
+        //calculate the source term in the MMS method
+        if(MMS){
+            double xi = dx*j;
+            sources = alphaS*k*k*cos(k*xi);
+            sourcef = alphaF*k*k*cos(k*xi) - uf*k*sin(k*xi);
+        }
+        
+        //solid
+        if (j==0){
+            double val;
+            //val = oldsol[j] + (alphaS*dt/(dx*dx))*(oldsol[j+1]-2*oldsol[j]);
+            val = oldsols[j] + (alphaS*dt/(dx*dx))*(oldsols[j+1]-oldsols[j])+dt*sources;
+
+            sols.push_back(val);
+        }
+        if (j > 0 and j < (nCells-1)){
+            double val;
+            val = oldsols[j] + (alphaS*dt/(dx*dx))*(oldsols[j+1]-2*oldsols[j]+ oldsols[j-1]) + dt*sources;
+            sols.push_back(val);
+        }
+        if (j==nCells-1){
+            double val;
+            val = oldsols[j] + (alphaF*dt/(dx*dx))*(oldsols[j-1]-oldsols[j]) + dt*sources;
+            sols.push_back(val);
+        }
+        
+        //fluid
+        if (j==0){
+            double val;
+            val = oldsolf[j] - (uf*dt/dx)*(oldsolf[j]-Lbc) + (alphaF*dt/(dx*dx))*(oldsolf[j+1]-oldsolf[j])+dt*sourcef;
+            solf.push_back(val);
+        }
+        if (j > 0 and j < (nCells-1)){
+            double val;
+            val = oldsolf[j] - (uf*dt/dx)*(oldsolf[j]-oldsolf[j-1]) + (alphaF*dt/(dx*dx))*(oldsolf[j+1]-2*oldsolf[j]+ oldsolf[j-1])+dt*sourcef;
+            solf.push_back(val);
+        }
+        if (j==nCells-1){
+            double val;
+            val = oldsolf[j] - (uf*dt/dx)*(oldsolf[j]-oldsolf[j-1]) + (alphaF*dt/(dx*dx))*(oldsolf[j-1]-oldsolf[j])+dt*sourcef;
+            solf.push_back(val);
+        }
+    }
+    std::vector<std::vector<double>> val{sols,solf};
+    return val;
+}
 
 void Simulator::solveNonCoupledDiff(bool MMS){
     
     //param
-    double dt = 0.05;
+    double dt = 0.5;
     double dx = height/double(nCells);
     
     std::cout << "dt : " << dt << std::endl;
     std::cout << "dx : " << dx << std::endl;
 
     //boundary conditions
-    double Lbc = 340;
-    double Rbc = 293;
+    double Lbc = 500;
         
     //error threshold defining the steady state solution
     double errThreshold = 1e-6;
@@ -60,6 +227,10 @@ void Simulator::solveNonCoupledDiff(bool MMS){
     //initial temperature
     std::vector<double> solf(nCells,T0);
     std::vector<double> sols(nCells,T0);
+    if(MMS){
+        solf = std::vector<double>(nCells,0);
+        sols = std::vector<double>(nCells,0);
+    }
     
     //to have these variables as global
     std::vector<double> oldsols = sols;
@@ -74,7 +245,6 @@ void Simulator::solveNonCoupledDiff(bool MMS){
     //puts the right boundary conditions for the MMS
     if(MMS){
         Lbc = 1;
-        Rbc = 1;
     }
     
     //check stability conditions
@@ -119,7 +289,6 @@ void Simulator::solveNonCoupledDiff(bool MMS){
         
         //over all space for each timestep
 
-        //solid
         for(int j = 0; j<=nCells-1;++j){
             
             //calculate the source term in the MMS method
@@ -133,7 +302,7 @@ void Simulator::solveNonCoupledDiff(bool MMS){
             if (j==0){
                 double val;
                 //val = oldsol[j] + (alphaS*dt/(dx*dx))*(oldsol[j+1]-2*oldsol[j]);
-                val = oldsols[j] + (alphaS*dt/(dx*dx))*(oldsols[j+1]-2*oldsols[j] + Lbc)+dt*sources;
+                val = oldsols[j] + (alphaS*dt/(dx*dx))*(oldsols[j+1]-oldsols[j])+dt*sources;
 
                 sols.push_back(val);
             }
@@ -144,14 +313,14 @@ void Simulator::solveNonCoupledDiff(bool MMS){
             }
             if (j==nCells-1){
                 double val;
-                val = oldsols[j] + (alphaF*dt/(dx*dx))*(oldsols[j-1]-2*oldsols[j]+ Rbc) + dt*sources;
+                val = oldsols[j] + (alphaF*dt/(dx*dx))*(oldsols[j-1]-oldsols[j]) + dt*sources;
                 sols.push_back(val);
             }
             
             //fluid
             if (j==0){
                 double val;
-                val = oldsolf[j] - (uf*dt/dx)*(oldsolf[j]-Lbc) + (alphaF*dt/(dx*dx))*(oldsolf[j+1]-2*oldsolf[j]+Lbc)+dt*sourcef;
+                val = oldsolf[j] - (uf*dt/dx)*(oldsolf[j]-Lbc) + (alphaF*dt/(dx*dx))*(oldsolf[j+1]-oldsolf[j])+dt*sourcef;
                 solf.push_back(val);
             }
             if (j > 0 and j < (nCells-1)){
@@ -161,7 +330,7 @@ void Simulator::solveNonCoupledDiff(bool MMS){
             }
             if (j==nCells-1){
                 double val;
-                val = oldsolf[j] - (uf*dt/dx)*(oldsolf[j]-oldsolf[j-1]) + (alphaF*dt/(dx*dx))*(oldsolf[j-1]-2*oldsolf[j]+Rbc)+dt*sourcef;
+                val = oldsolf[j] - (uf*dt/dx)*(oldsolf[j]-oldsolf[j-1]) + (alphaF*dt/(dx*dx))*(oldsolf[j-1]-oldsolf[j])+dt*sourcef;
                 solf.push_back(val);
             }
         }
@@ -169,7 +338,7 @@ void Simulator::solveNonCoupledDiff(bool MMS){
         //check if steady state is attained
         if(MMS){
             
-            if (ss_fluid == false){
+            if ((ss_fluid == false) and (i%this->checkSteadyStateTimeStep)){
                 double err = 0;
                 for(int i = 0; i <nCells;++i){
                     err += 1/dt * abs(solf[i]-oldsolf[i]);
@@ -181,7 +350,7 @@ void Simulator::solveNonCoupledDiff(bool MMS){
                 }
             }
             
-            if (ss_solid == false){
+            if ((ss_solid == false) and (i%this->checkSteadyStateTimeStep)){
                 double err = 0;
                 for(int i = 0; i < nCells;++i){
                     err += 1/dt * abs(sols[i]-oldsols[i]);
@@ -192,12 +361,12 @@ void Simulator::solveNonCoupledDiff(bool MMS){
                     ss_solid = true;
                 }
             }
+            //break out of the time step loop when steady state is attained for both solutions
+            if(ss_fluid and ss_solid){
+                break;
+            }
         }
         
-        //break out of the time step loop when steady state is attained for both solutions
-        if(ss_fluid and ss_solid){
-            break;
-        }
     }
     if(MMS){
         
@@ -211,8 +380,9 @@ void Simulator::solveNonCoupledDiff(bool MMS){
     }
 }
 
+
 void Simulator::OVSNonCoupledDiff(double Pe, int n){
-    double dt = 0.1;
+    double dt = 1.5;
     double alphaf = alphaF;
     
     std::vector<double> L1F;
@@ -237,7 +407,7 @@ void Simulator::OVSNonCoupledDiff(double Pe, int n){
 
         
         //error threshold defining the steady state solution
-        double errThreshold = 1e-6;
+        double errThreshold = 1e-3;
         //bool of ss attained, when both true the program stops
         bool ss_fluid = false;
         bool ss_solid = false;
@@ -303,7 +473,7 @@ void Simulator::OVSNonCoupledDiff(double Pe, int n){
                 double xi = dx*j;
                 sources = alphaS*k*k*cos(k*xi);
                 sourcef = alphaf*k*k*cos(k*xi) - uf*k*sin(k*xi);
-                
+                /*
                 //solid
                 if (j==0){
                     double val;
@@ -322,7 +492,8 @@ void Simulator::OVSNonCoupledDiff(double Pe, int n){
                     val = oldsols[j] + (alphaf*dt/(dx*dx))*(oldsols[j-1]-2*oldsols[j]+ Rbc) + dt*sources;
                     sols.push_back(val);
                 }
-                
+                */
+                /*
                 //fluid
                 if (j==0){
                     double val;
@@ -337,6 +508,23 @@ void Simulator::OVSNonCoupledDiff(double Pe, int n){
                 if (j==NCells-1){
                     double val;
                     val = oldsolf[j] - (uf*dt/dx)*(oldsolf[j]-oldsolf[j-1]) + (alphaf*dt/(dx*dx))*(oldsolf[j-1]-2*oldsolf[j]+Rbc)+dt*sourcef;
+                    solf.push_back(val);
+                }
+                 */
+                //fluid
+                if (j==0){
+                    double val;
+                    val = oldsolf[j] - (uf*dt/dx)*(oldsolf[j]-Lbc) + (alphaF*dt/(dx*dx))*(oldsolf[j+1]-oldsolf[j])+dt*sourcef;
+                    solf.push_back(val);
+                }
+                if (j > 0 and j < (NCells-1)){
+                    double val;
+                    val = oldsolf[j] - (uf*dt/dx)*(oldsolf[j]-oldsolf[j-1]) + (alphaF*dt/(dx*dx))*(oldsolf[j+1]-2*oldsolf[j]+ oldsolf[j-1])+dt*sourcef;
+                    solf.push_back(val);
+                }
+                if (j==NCells-1){
+                    double val;
+                    val = oldsolf[j] - (uf*dt/dx)*(oldsolf[j]-oldsolf[j-1]) + (alphaF*dt/(dx*dx))*(oldsolf[j-1]-oldsolf[j])+dt*sourcef;
                     solf.push_back(val);
                 }
             }
@@ -355,7 +543,7 @@ void Simulator::OVSNonCoupledDiff(double Pe, int n){
                 }
             }
             
-            
+            /*
             if (ss_solid == false){
                 double err = 0;
                 for(int i = 0; i < NCells;++i){
@@ -367,7 +555,7 @@ void Simulator::OVSNonCoupledDiff(double Pe, int n){
                     ss_solid = true;
                 }
             }
-            
+            */
             //break out of the time step loop when steady state is attained for both solutions
             if(ss_fluid and ss_solid){
                 break;
@@ -381,16 +569,20 @@ void Simulator::OVSNonCoupledDiff(double Pe, int n){
 
         L1F.push_back(L1Error(solf,analyticSol));
         LinfF.push_back(LinfError(solf, analyticSol));
+        /*
         L1S.push_back(L1Error(sols,analyticSol));
         LinfS.push_back(LinfError(sols, analyticSol));
+         */
         
         //update dt
         dt = dt/4;
     }
     exporter.pushOVS(L1F);
     exporter.pushOVS(LinfF);
+    /*
     exporter.pushOVS(L1S);
     exporter.pushOVS(LinfS);
+     */
 }
 
 double Simulator::L1Error(std::vector<double> numSol,std::vector<double> analySol){
@@ -439,4 +631,8 @@ Simulator::Simulator(std::unordered_map<std::string, double> durations,
                      double alphaS,
                      double uf):durations(durations),height(height),diameter(diameter),
                     nCells(nCells),T0(T0),nCycles(nCycles),exporter(exporter),nTimeStepsCycle(nTimeStepsCycle),alphaF(alphaF),alphaS(alphaS),uf(uf),state("idledc")
-{}
+{
+    dx = height/double(nCells);
+    std::cout << "dt : " << dt << std::endl;
+    std::cout << "dx : " << dx << std::endl;    
+}

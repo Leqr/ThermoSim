@@ -16,7 +16,7 @@
 
 class Simulator {
     private:
-    int pushTimeStep = 10;
+    // initialised by the user
     std::unordered_map<std::string, double> durations;
     double height;
     double diameter;
@@ -30,13 +30,28 @@ class Simulator {
     double alphaS;
     double uf;
     
+    //sim parameters
+    int pushTimeStep = 100;
+    int checkSteadyStateTimeStep = 1000;
+    double errThreshold = 1e-6;
+    double dt = 0.5;
+    double dx;
+    double Lbc;
+    
+    //Method of Manufactured solutions
+    double n = 1.0;
+    double k = 2*M_PI*n/height;
+    
+    
     public:
     std::string getState();
-    void simulate();
+    void simulate(bool MMS = false);
     
     void solveNonCoupledDiff(bool MMS = false);
+    std::vector<std::vector<double>> solveDiff(std::vector<double> oldsols, std::vector<double> oldsolf, bool MMS = false,bool coupled = true);
     void OVSNonCoupledDiff(double Pe,int n);
     
+    void checkStabCond();
     double L1Error(std::vector<double> numSol,std::vector<double> analySol);
     double LinfError(std::vector<double> numSol,std::vector<double> analySol);
     
