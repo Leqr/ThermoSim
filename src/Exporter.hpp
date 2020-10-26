@@ -16,9 +16,7 @@
 
 class Exporter {
     private:
-    std::string outFile;
-    std::string stateFile;
-    std::ofstream outdata;
+    
     std::ofstream outdatastate;
     std::ofstream fluidtempdata;
     std::ofstream solidtempdata;
@@ -26,15 +24,19 @@ class Exporter {
 
     
     public:
-    std::string getOutFile();
-    void setOutFile(std::string outFile);
-    void fexport(std::vector<std::vector<double>> fluidtemp,std::vector<std::vector<double>> solidtemp);
-    void pushFluid(std::vector<double> fluidtemp);
-    void pushSolid(std::vector<double> solidtemp);
-    void pushOVS(std::vector<double> l);
+    
+    
+    void pushFluid(const std::vector<double> &fluidtemp);
+    void pushSolid(const std::vector<double> &solidtemp);
+    void pushOVS(const std::vector<double> &l);
     void exportState(std::string state);
-    Exporter(std::string outFile = "outCFD.txt",std::string stateFile = "stateCFD.txt");
+    Exporter();
     ~Exporter();
+    
+    
+    /******************** Deprecated *****************
+    void fexport(std::vector<std::vector<double>> fluidtemp,std::vector<std::vector<double>> solidtemp);
+     */
 };
 
 #endif /* Exporter_hpp */

@@ -130,8 +130,8 @@ if __name__ == "__main__":
             af.append(float(val))
         solss.append(af)
 
-sol = solss
+sol = solsf
 
 #plotMov(16,len(sol),sol)
-plotvscos(sol,16,1)
+plotvscos(sol,32,1)
 #OVSNC()

@@ -16,6 +16,7 @@
 
 class Simulator {
     private:
+    
     // initialised by the user
     std::unordered_map<std::string, double> durations;
     double height;
@@ -30,31 +31,34 @@ class Simulator {
     double alphaS;
     double uf;
     
-    //sim parameters
+    //simulation parameters
     int pushTimeStep = 100;
     int checkSteadyStateTimeStep = 1000;
     double errThreshold = 1e-6;
     double dt = 0.5;
-    double dx;
-    double Lbc;
+    double dx; //calculated from user param
+    double Lbc; //initialized in the constructor
     
-    //Method of Manufactured solutions
+    //Method of Manufactured solutions parameters
     double n = 1.0;
-    double k = 2*M_PI*n/height;
+    double k;
     
     
     public:
-    std::string getState();
+    //main simulation function
     void simulate(bool MMS = false);
     
-    void solveNonCoupledDiff(bool MMS = false);
-    std::vector<std::vector<double>> solveDiff(std::vector<double> oldsols, std::vector<double> oldsolf, bool MMS = false,bool coupled = true);
+    //Solvers and OVS
+    void solveDiff(const std::vector<double> &oldsols,const std::vector<double> &oldsolf,std::vector<double> &sols, std::vector<double> &solf, bool MMS = false,bool coupled = true);
     void OVSNonCoupledDiff(double Pe,int n);
     
+    //Utility functions
+    std::string getState();
     void checkStabCond();
-    double L1Error(std::vector<double> numSol,std::vector<double> analySol);
-    double LinfError(std::vector<double> numSol,std::vector<double> analySol);
+    double L1Error(const std::vector<double> &numSol,const std::vector<double> &analySol);
+    double LinfError(const std::vector<double> &numSol,const std::vector<double> &analySol);
     
+    //Constructor
     Simulator(std::unordered_map<std::string, double> durations,
               double height,
               double diameter,
@@ -66,6 +70,10 @@ class Simulator {
               double alphaF,
               double alphaS,
               double uf);
+    
+    /******************** Deprecated ******************/
+    void solveNonCoupledDiff(bool MMS = false);
+
     
 };
 

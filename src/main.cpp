@@ -13,47 +13,6 @@
 #include <string>
 #include <fstream>
 
-void testReader(){
-    
-    std::vector <double> v1 {
-        1,
-        2,
-        3,
-        4,
-        5
-    };
-    std::vector <double> v2 {
-           1,
-           2,
-           3,
-           45,
-           55
-       };
-    
-    std::vector <double> w1 {
-        2,
-        2,
-        3,
-        4,
-        5
-    };
-    std::vector <double> w2 {
-           2,
-           2,
-           3,
-           45,
-           55
-    };
-    
-    Exporter exporter;
-
-    std::vector<std::vector <double>> v{v1,v2};
-    std::vector<std::vector <double>> w{w1,w2};
-
-    exporter.fexport(v,w);
-    
-}
-
 int main(){
     
     //parameters for the simulation
@@ -129,9 +88,56 @@ int main(){
 
     //run the simulation
     Simulator sim(durations,height,diameter,nCells,T0,nCycles,nTimeStepsCycle,exporter,alphaF,alphaS,uf);
-    //sim.solveNonCoupledDiff(true);
-    //sim.solveNonCoupledDiff();
     //sim.OVSNonCoupledDiff(0.001, 4);
     sim.simulate(true);
    
 }
+
+/*
+ ******************************************************************************
+ Deprecated, for reference
+ ******************************************************************************
+*/
+
+/*
+void testReader(){
+    
+    std::vector <double> v1 {
+        1,
+        2,
+        3,
+        4,
+        5
+    };
+    std::vector <double> v2 {
+           1,
+           2,
+           3,
+           45,
+           55
+       };
+    
+    std::vector <double> w1 {
+        2,
+        2,
+        3,
+        4,
+        5
+    };
+    std::vector <double> w2 {
+           2,
+           2,
+           3,
+           45,
+           55
+    };
+    
+    Exporter exporter;
+
+    std::vector<std::vector <double>> v{v1,v2};
+    std::vector<std::vector <double>> w{w1,w2};
+
+    exporter.fexport(v,w);
+    
+}
+ */
