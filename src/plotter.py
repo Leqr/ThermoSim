@@ -6,7 +6,7 @@ def plotMov(nCells,nTimeStep,sol):
     #animation of the solution
 
     fig = plt.figure()
-    ax = plt.axes(xlim=(0, nCells),ylim = (200,600))
+    ax = plt.axes(xlim=(0, nCells-1),ylim = (200,500))
     line, = ax.plot([], [], lw=2)
 
     def ini():
@@ -15,7 +15,7 @@ def plotMov(nCells,nTimeStep,sol):
 
     # animation function.  This is called sequentially
     def animate(i):
-        x = np.linspace(1, nCells, nCells)
+        x = np.linspace(0, nCells-1, nCells)
         y = sol[i]
         line.set_data(x, y)
         return line,
@@ -130,8 +130,8 @@ if __name__ == "__main__":
             af.append(float(val))
         solss.append(af)
 
-sol = solsf
+sol = solss
 
-#plotMov(16,len(sol),sol)
-plotvscos(sol,32,1)
+plotMov(32,len(sol),sol)
+#plotvscos(sol,16,2)
 #OVSNC()

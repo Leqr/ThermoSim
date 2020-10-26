@@ -26,6 +26,8 @@ int main(){
     double alphaF;
     double alphaS;
     double uf;
+    double hvs;
+    double hvf;
     
     //open the setup.txt file
     std::ifstream setup;
@@ -79,6 +81,12 @@ int main(){
             case 26:
                 uf = std::stod(line);
                 break;
+            case 28:
+                hvs = std::stod(line);
+                break;
+            case 30:
+                hvf = std::stod(line);
+                break;
         }
         k += 1;
     }
@@ -87,9 +95,10 @@ int main(){
     Exporter exporter;
 
     //run the simulation
-    Simulator sim(durations,height,diameter,nCells,T0,nCycles,nTimeStepsCycle,exporter,alphaF,alphaS,uf);
+    Simulator sim(durations,height,diameter,nCells,T0,nCycles,nTimeStepsCycle,exporter,alphaF,alphaS,uf,hvs,hvf);
+    
     //sim.OVSNonCoupledDiff(0.001, 4);
-    sim.simulate(true);
+    sim.simulate();
    
 }
 

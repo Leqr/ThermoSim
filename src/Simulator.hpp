@@ -30,18 +30,22 @@ class Simulator {
     double alphaF;
     double alphaS;
     double uf;
+    double hvf;
+    double hvs;
     
     //simulation parameters
     int pushTimeStep = 100;
-    int checkSteadyStateTimeStep = 1000;
+    int checkSteadyStateTimeStep = 50;
     double errThreshold = 1e-6;
-    double dt = 0.5;
+    double dt = 1;
     double dx; //calculated from user param
     double Lbc; //initialized in the constructor
     
     //Method of Manufactured solutions parameters
-    double n = 1.0;
+    double n1 = 1.0;
+    double n2 = 2.0;
     double k;
+    double k2;
     
     
     public:
@@ -69,7 +73,9 @@ class Simulator {
               Exporter& exporter,
               double alphaF,
               double alphaS,
-              double uf);
+              double uf,
+              double hvs,
+              double hvf);
     
     /******************** Deprecated ******************/
     void solveNonCoupledDiff(bool MMS = false);
