@@ -34,7 +34,7 @@ class Simulator {
     double hvs;
     
     //simulation parameters
-    int pushTimeStep = 100;
+    int pushTimeStep = 1000;
     int checkSteadyStateTimeStep = 50;
     double errThreshold = 1e-6;
     double dt = 1;
@@ -42,18 +42,18 @@ class Simulator {
     double Lbc; //initialized in the constructor
     
     //Method of Manufactured solutions parameters
-    double n1 = 1.0;
-    double n2 = 2.0;
-    double k;
-    double k2;
+    double n_fluid = 1.0;
+    double n_solid = 1.0;
+    double k_fluid;
+    double k_solid;
     
     
     public:
     //main simulation function
-    void simulate(bool MMS = false);
+    void simulate(bool MMS = false,bool coupled = false);
     
     //Solvers and OVS
-    void solveDiff(const std::vector<double> &oldsols,const std::vector<double> &oldsolf,std::vector<double> &sols, std::vector<double> &solf, bool MMS = false,bool coupled = true);
+    void solveDiff(const std::vector<double> &oldsols,const std::vector<double> &oldsolf,std::vector<double> &sols, std::vector<double> &solf, bool MMS = false,bool coupled = false);
     void OVSNonCoupledDiff(double Pe,int n);
     
     //Utility functions

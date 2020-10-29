@@ -16,7 +16,7 @@ std::string Simulator::getState(){
     return state;
 }
 
-void Simulator::simulate(bool MMS){
+void Simulator::simulate(bool MMS,bool coupled){
     
     /*
     //timestep simulation of the program
@@ -40,10 +40,10 @@ void Simulator::simulate(bool MMS){
      */
     
     //initial temperature
-    std::vector<double> solf(nCells,T0);
-    std::vector<double> sols(nCells,T0);
-    std::vector<double> oldsols = sols;
-    std::vector<double> oldsolf = solf;
+    std::vector<double> sol_fluid(nCells,T0);
+    std::vector<double> sol_solid(nCells,T0);
+    std::vector<double> oldsols = sol_solid;
+    std::vector<double> oldsolf = sol_fluid;
     
     Lbc = 500;
     
@@ -53,40 +53,54 @@ void Simulator::simulate(bool MMS){
  
     if(MMS){
         Lbc = 1;
-        solf.clear();
-        sols.clear();
+        sol_fluid.clear();
+        sol_solid.clear();
         for(int nc = 0; nc < nCells-1; ++nc){
-            solf.push_back(cos(this->k*nc*dx));
-            sols.push_back(cos(this->k2*nc*dx));
+            sol_fluid.push_back(cos(this->k_fluid*nc*dx));
+            sol_solid.push_back(cos(this->k_solid*nc*dx));
         }
     }
     
     checkStabCond();
     
     for(int i = 1; i < nTimeStepsCycle; ++i){
+        
+        
                 
         //export every multiple of pushtimestep solution to a file
         if (i%this->pushTimeStep == 0){
-            exporter.pushSolid(sols);
-            exporter.pushFluid(solf);
+            exporter.pushSolid(sol_solid);
+            exporter.pushFluid(sol_fluid);
         }
         
-        std::vector<double> oldsols = sols;
-        std::vector<double> oldsolf = solf;
         
-        sols.clear();
-        solf.clear();
+        std::vector<double> oldsol_solid = sol_solid;
+        std::vector<double> oldsol_fluid = sol_fluid;
+        
+        sol_solid.clear();
+        sol_fluid.clear();
         
         //get the n+1 solution, pass references to the solution to ptimize the speed
-        solveDiff(oldsols,oldsolf,sols,solf,MMS,true);
+        solveDiff(oldsol_solid,oldsol_fluid,sol_solid,sol_fluid,MMS,coupled);
+        
         
         //check if steady state is attained
         if(MMS){
             
+            //normalize the solid solution
+            double mean = 0;
+            for(int i = 0; i < nCells; ++i){
+                //calculate average of solid solution to normalize
+                mean += (1/double(nCells))*sol_solid[i];
+            }
+            for(int i = 0; i < nCells; ++i){
+                sol_solid[i] -= mean;
+            }
+            
             if ((ss_fluid == false) and (i%this->checkSteadyStateTimeStep)){
                 double err = 0;
                 for(int i = 0; i <nCells;++i){
-                    err += 1/dt * abs(solf[i]-oldsolf[i]);
+                    err += 1/dt * abs(sol_fluid[i]-oldsol_fluid[i]);
                 }
                 err = 1.0/nCells*err;
                 if(err < errThreshold){
@@ -98,7 +112,7 @@ void Simulator::simulate(bool MMS){
             if ((ss_solid == false) and (i%this->checkSteadyStateTimeStep)){
                 double err = 0;
                 for(int i = 0; i < nCells;++i){
-                    err += 1/dt * abs(sols[i]-oldsols[i]);
+                    err += 1/dt * abs(sol_solid[i]-oldsol_solid[i]);
                 }
                 err = 1.0/nCells*err;
                 if(err < errThreshold){
@@ -116,37 +130,48 @@ void Simulator::simulate(bool MMS){
     if(MMS){
         std::vector<double> analyticSolFluid;
         std::vector<double> analyticSolSolid;
+        
 
         for(int i = 0; i < nCells; ++i){
-            analyticSolFluid.push_back(cos(k*dx*i));
-            analyticSolSolid.push_back(cos(k2*dx*i));
+            analyticSolFluid.push_back(cos(k_fluid*dx*i));
+            analyticSolSolid.push_back(cos(k_solid*dx*i));
         }
 
-        std::cout <<"L1 error : " << L1Error(solf,analyticSolFluid) << std::endl;
-        std::cout << "Linf error : " << LinfError(solf,analyticSolFluid) << std::endl;
+        std::cout <<"L1 error fluid: " << L1Error(sol_fluid,analyticSolFluid) << std::endl;
+        std::cout << "Linf error fluid: " << LinfError(sol_fluid,analyticSolFluid) << std::endl;
+    
         
-        std::cout <<"L1 error : " << L1Error(sols,analyticSolSolid) << std::endl;
-        std::cout << "Linf error : " << LinfError(sols,analyticSolSolid) << std::endl;
+        std::cout <<"L1 error solid: " << L1Error(sol_solid,analyticSolSolid) << std::endl;
+        std::cout << "Linf error solid: " << LinfError(sol_solid,analyticSolSolid) << std::endl;
     }
     
 }
 
-void Simulator::solveDiff(const std::vector<double> &oldsols,const  std::vector<double> &oldsolf, std::vector<double> &sols, std::vector<double> &solf,bool MMS,bool coupled){
-
+void Simulator::solveDiff(const std::vector<double> &oldsol_solid,const  std::vector<double> &oldsol_fluid, std::vector<double> &sol_solid, std::vector<double> &sol_fluid,bool MMS,bool coupled){
 
     //Method of Manufactured solutions
-    double sources = 0;
-    double sourcef = 0;
+    double source_solid = 0;
+    double source_fluid = 0;
     //puts the right boundary conditions for the MMS
     if(MMS){
-        //source term on the boundary
-        sources = alphaS*k2*k2;
-        sourcef = alphaF*k*k;
+        /*
+        double xiplu = dx*(1/2);
+        double ximin = dx*(-1/2);
+        sources = alphaS*k2*(sin(k2*xiplu)-sin(k2*ximin));
+        sourcef = alphaF*k*(sin(k*xiplu)-sin(k*ximin)) + uf*(cos(k*xiplu) - cos(k*ximin));
+        */
+        double xi = 0;
+        source_solid = alphaS*k_solid*k_solid*cos(k_solid*xi);
+        source_fluid = alphaF*k_fluid*k_fluid*cos(k_fluid*xi) - uf*k_fluid*sin(k_fluid*xi);
+        if(coupled){
+            source_solid += hvs*(cos(k_solid*xi)-cos(k_fluid*xi));
+            source_fluid += hvf*(cos(k_fluid*xi)-cos(k_solid*xi));
+        }
     }
 
     //left boundary values
-    sols.push_back(oldsols[0] + (alphaS*dt/(dx*dx))*(oldsols[1]-oldsols[0])+dt*sources);
-    solf.push_back(oldsolf[0] - (uf*dt/dx)*(oldsolf[0]-Lbc) + (alphaF*dt/(dx*dx))*(oldsolf[1]-oldsolf[0])+dt*sourcef);
+    sol_solid.push_back(oldsol_solid[0] + (alphaS*dt/(dx*dx))*(oldsol_solid[1]-oldsol_solid[0])+(dt)*source_solid);
+    sol_fluid.push_back(oldsol_fluid[0] - (uf*dt/dx)*(oldsol_fluid[0]-Lbc) + (alphaF*dt/(dx*dx))*(oldsol_fluid[1]-oldsol_fluid[0])+(dt)*source_fluid);
     
 
     //over all space for each timestep
@@ -154,67 +179,80 @@ void Simulator::solveDiff(const std::vector<double> &oldsols,const  std::vector<
         
         //calculate the source term in the MMS method
         if(MMS){
-            double xi = dx*j;
-            sources = alphaS*k2*k2*cos(k2*xi);
-            sourcef = alphaF*k*k*cos(k*xi) - uf*k*sin(k*xi);
+            /*
+            double xiplu = dx*(j+1/2);
+            double ximin = dx*(j-1/2);
+            sources = alphaS*k2*(sin(k2*xiplu)-sin(k2*ximin));
+            sourcef = alphaF*k*(sin(k*xiplu)-sin(k*ximin)) + uf*(cos(k*xiplu) - cos(k*ximin));
+            */
+            double xi = dx*(j);
+            source_solid = alphaS*k_solid*k_solid*cos(k_solid*xi);
+            source_fluid = alphaF*k_fluid*k_fluid*cos(k_fluid*xi) - uf*k_fluid*sin(k_fluid*xi);
             if(coupled){
-                sources += hvs*(cos(k2*xi)-cos(k*xi));
-                sourcef += hvf*(cos(k*xi)-cos(k2*xi));
+                source_solid += hvs*(cos(k_solid*xi)-cos(k_fluid*xi));
+                source_fluid += hvf*(cos(k_fluid*xi)-cos(k_solid*xi));
             }
         }
         
         //solid
-        sols.push_back(oldsols[j] + (alphaS*dt/(dx*dx))*(oldsols[j+1]-2*oldsols[j]+ oldsols[j-1]) + dt*sources);
+        sol_solid.push_back(oldsol_solid[j] + (alphaS*dt/(dx*dx))*(oldsol_solid[j+1]-2*oldsol_solid[j]+ oldsol_solid[j-1]) + (dt)*source_solid);
  
         //fluid
-        solf.push_back(oldsolf[j] - (uf*dt/dx)*(oldsolf[j]-oldsolf[j-1]) + (alphaF*dt/(dx*dx))*(oldsolf[j+1]-2*oldsolf[j]+ oldsolf[j-1])+dt*sourcef);
+        sol_fluid.push_back(oldsol_fluid[j] - (uf*dt/dx)*(oldsol_fluid[j]-oldsol_fluid[j-1]) + (alphaF*dt/(dx*dx))*(oldsol_fluid[j+1]-2*oldsol_fluid[j]+ oldsol_fluid[j-1])+(dt)*source_fluid);
         
         if(coupled){
             //solve the coupled equation one step behind to optimize memory
             Eigen::Matrix2d A;
             A << (1+hvf*dt), (-hvf*dt), (-hvs*dt), (1+hvs*dt);
-            Eigen::Vector2d b(solf[j-1],sols[j-1]);
+            Eigen::Vector2d b(sol_fluid[j-1],sol_solid[j-1]);
             Eigen::Vector2d x = A.colPivHouseholderQr().solve(b);
             
             //puts the coupled solution back in
-            sols[j-1] = x(1);
-            solf[j-1] = x(0);
+            sol_solid[j-1] = x(1);
+            sol_fluid[j-1] = x(0);
         }
     }
     
     //MMS last value
     if(MMS){
+        /*
+        double xiplu = dx*(nCells - 1 + 1/2);
+        double ximin = dx*(nCells - 1 - 1/2);
+        sources = alphaS*k2*(sin(k2*xiplu)-sin(k2*ximin));
+        sourcef = alphaF*k*k*(sin(k*xiplu)-sin(k*ximin)) + uf*k*(cos(k*xiplu)- cos(k*ximin));
+         */
+        
         double xi = dx*(nCells-1);
-        sources = alphaS*k2*k2*cos(k2*xi);
-        sourcef = alphaF*k*k*cos(k*xi) - uf*k*sin(k*xi);
+        source_solid = alphaS*k_solid*k_solid*cos(k_solid*xi);
+        source_fluid = alphaF*k_fluid*k_fluid*cos(k_fluid*xi) - uf*k_fluid*sin(k_fluid*xi);
         if(coupled){
-            sources += hvs*(cos(k2*xi)-cos(k*xi));
-            sourcef += hvf*(cos(k*xi)-cos(k2*xi));
+            source_solid += hvs*(cos(k_solid*xi)-cos(k_fluid*xi));
+            source_fluid += hvf*(cos(k_fluid*xi)-cos(k_solid*xi));
         }
     }
     
     //values on the right boundary
-    sols.push_back(oldsols[nCells-1] + (alphaF*dt/(dx*dx))*(oldsols[nCells-2]-oldsols[nCells-1]) + dt*sources);
+    sol_solid.push_back(oldsol_solid[nCells-1] + (alphaF*dt/(dx*dx))*(oldsol_solid[nCells-2]-oldsol_solid[nCells-1]) + (dt)*source_solid);
     
-    solf.push_back(oldsolf[nCells-1] - (uf*dt/dx)*(oldsolf[nCells-1]-oldsolf[nCells-2]) + (alphaF*dt/(dx*dx))*(oldsolf[nCells-2]-oldsolf[nCells-1])+dt*sourcef);
+    sol_fluid.push_back(oldsol_fluid[nCells-1] - (uf*dt/dx)*(oldsol_fluid[nCells-1]-oldsol_fluid[nCells-2]) + (alphaF*dt/(dx*dx))*(oldsol_fluid[nCells-2]-oldsol_fluid[nCells-1])+(dt)*source_fluid);
     
     if(coupled){
         //solve the coupled equation one step behind to optimize memory
         Eigen::Matrix2d A;
         A << (1+hvf*dt), (-hvf*dt), (-hvs*dt), (1+hvs*dt);
-        Eigen::Vector2d b(solf[nCells-2],sols[nCells-2]);
+        Eigen::Vector2d b(sol_fluid[nCells-2],sol_solid[nCells-2]);
         Eigen::Vector2d x = A.colPivHouseholderQr().solve(b);
 ;
         
         //puts the coupled solution back in
-        sols[nCells-2] = x(1);
-        solf[nCells-2] = x(0);
+        sol_solid[nCells-2] = x(1);
+        sol_fluid[nCells-2] = x(0);
         
-        b(0) = solf[nCells-1];
-        b(1) = sols[nCells-1];
+        b(0) = sol_fluid[nCells-1];
+        b(1) = sol_solid[nCells-1];
         x = A.colPivHouseholderQr().solve(b);
-        sols[nCells-1] = x(1);
-        solf[nCells-1] = x(0);
+        sol_solid[nCells-1] = x(1);
+        sol_fluid[nCells-1] = x(0);
     }
     
     
@@ -247,7 +285,9 @@ void Simulator::checkStabCond(){
 
 
 void Simulator::OVSNonCoupledDiff(double Pe, int n){
-    this->dt = 0.5;
+    this->dt = 2;
+    this -> n_fluid = n;
+    this -> n_solid = n;
     
     std::vector<double> L1F;
     std::vector<double> LinfF;
@@ -255,9 +295,12 @@ void Simulator::OVSNonCoupledDiff(double Pe, int n){
     std::vector<double> LinfS;
     
     int NCellsi = 8;
-    int NCells = 8;
     
-    for(int i = 0;i < 7; ++i){
+    //puts the right boundary conditions for the MMS
+    this->Lbc = 1;
+    
+    
+    for(int i = 0;i < 8; ++i){
         
         this->nCells = NCellsi*pow(2,i);
         
@@ -274,28 +317,24 @@ void Simulator::OVSNonCoupledDiff(double Pe, int n){
         bool ss_fluid = false;
         bool ss_solid = false;
         
-        //initial temperature
-        std::vector<double> solf(nCells,T0);
-        std::vector<double> sols(nCells,T0);
-        
         //to have these variables as global
+        std::vector<double> solf;
+        std::vector<double> sols;
+        
+        //initial temperature
+        for(int nc = 0; nc < nCells-1; ++nc){
+            solf.push_back(cos(this->k_fluid*nc*dx));
+            sols.push_back(cos(this->k_solid*nc*dx));
+        }
+        
         std::vector<double> oldsols = sols;
         std::vector<double> oldsolf = solf;
-        
-        
-        //Method of Manufactured solutions
-        double sources = 0;
-        double sourcef = 0;
-        //puts the right boundary conditions for the MMS
-        this->Lbc = 1;
-        
+    
         //check stability conditions
-        
         checkStabCond();
         
         //timestep simulation of the program
         for(int i = 1; i <= nTimeStepsCycle; ++i){
-            
             
             std::vector<double> oldsols = sols;
             std::vector<double> oldsolf = solf;
@@ -303,11 +342,10 @@ void Simulator::OVSNonCoupledDiff(double Pe, int n){
             sols.clear();
             solf.clear();
             
-            //get the n+1 solution, pass references to the solution to ptimize the speed
-            solveDiff(oldsols,oldsolf,sols,solf,true);
+            //get the n+1 solution, pass references to the solution to optimize the speed
+            solveDiff(oldsols,oldsolf,sols,solf,true,false);
             
             //check if steady state is attained
-            
             if (ss_fluid == false){
                 double err = 0;
                 for(int i = 0; i <nCells;++i){
@@ -343,8 +381,8 @@ void Simulator::OVSNonCoupledDiff(double Pe, int n){
         std::vector<double> analyticSolSolid;
 
         for(int i = 0; i < nCells; ++i){
-            analyticSolFluid.push_back(cos(k*dx*i));
-            analyticSolSolid.push_back(cos(k2*dx*i));
+            analyticSolFluid.push_back(cos(k_fluid*dx*i));
+            analyticSolSolid.push_back(cos(k_solid*dx*i));
         }
 
         L1F.push_back(L1Error(solf,analyticSolFluid));
@@ -352,10 +390,9 @@ void Simulator::OVSNonCoupledDiff(double Pe, int n){
         
         L1S.push_back(L1Error(sols,analyticSolSolid));
         LinfS.push_back(LinfError(sols, analyticSolSolid));
-         
         
         //update dt
-        dt = dt/4;
+        dt = dt/2;
     }
     exporter.pushOVS(L1F);
     exporter.pushOVS(LinfF);
@@ -419,8 +456,8 @@ Simulator::Simulator(std::unordered_map<std::string, double> durations,
     dx = height/double(nCells);
     std::cout << "dt : " << dt << std::endl;
     std::cout << "dx : " << dx << std::endl;
-    k = 2*M_PI*n1/this->height;
-    k2 = 2*M_PI*n2/this->height;
+    k_fluid = 2*M_PI*n_fluid/this->height;
+    k_solid = 2*M_PI*n_solid/this->height;
 }
 
 /*
@@ -445,8 +482,8 @@ void Simulator::solveNonCoupledDiff(bool MMS){
         solf.clear();
         sols.clear();
         for(int nc = 0; nc < nCells - 1; ++nc){
-            solf.push_back(cos(this->k*nc*dx));
-            sols.push_back(cos(this->k*nc*dx));
+            solf.push_back(cos(this->k_fluid*nc*dx));
+            sols.push_back(cos(this->k_fluid*nc*dx));
         }
     }
     
@@ -491,8 +528,8 @@ void Simulator::solveNonCoupledDiff(bool MMS){
             //calculate the source term in the MMS method
             if(MMS){
                 double xi = dx*j;
-                sources = alphaS*k*k*cos(k*xi);
-                sourcef = alphaF*k*k*cos(k*xi) - uf*k*sin(k*xi);
+                sources = alphaS*k_fluid*k_fluid*cos(k_fluid*xi);
+                sourcef = alphaF*k_fluid*k_fluid*cos(k_fluid*xi) - uf*k_fluid*sin(k_fluid*xi);
             }
             
             //solid
@@ -569,7 +606,7 @@ void Simulator::solveNonCoupledDiff(bool MMS){
         
         std::vector<double> analyticSol;
         for(int i = 0; i < nCells; ++i){
-            analyticSol.push_back(cos(k*dx*i));
+            analyticSol.push_back(cos(k_fluid*dx*i));
         }
 
         std::cout <<"L1 error : " << L1Error(solf,analyticSol) << std::endl;

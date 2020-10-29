@@ -97,8 +97,8 @@ int main(){
     //run the simulation
     Simulator sim(durations,height,diameter,nCells,T0,nCycles,nTimeStepsCycle,exporter,alphaF,alphaS,uf,hvs,hvf);
     
-    //sim.OVSNonCoupledDiff(0.001, 4);
-    sim.simulate();
+    //sim.OVSNonCoupledDiff(1,1);
+    sim.simulate(true,true);
    
 }
 

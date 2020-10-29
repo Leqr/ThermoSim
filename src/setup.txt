@@ -3,13 +3,13 @@ height:
 diameter:
 3
 nCells:
-32
+512
 T0:
 293
 nCycles:
 10
 nTimeStepsCycle:
-100000
+5000000
 charging state duration:
 50
 idle charging-discharging state duration:
@@ -19,14 +19,35 @@ discharging state duration:
 idle discharging-charging state duration:
 50
 alphaF:
-0.00333
+0.0001
 alphaS:
-0.005
+0.001
 uf:
-0.00005
+0.0001
 hvs:
 1000
 hvf:
 1000
 eps:
 0.4
+
+
+
+OVS setups :
+pe = 1
+alphaS:
+0.05
+uf:
+0.05
+
+pe = 0.001
+alphaS:
+0.03
+uf:
+0.000003
+
+pe = 1000
+alphaS:
+0.003
+uf:
+0.03
