@@ -34,10 +34,10 @@ class Simulator {
     double hvs;
     
     //simulation parameters
-    int pushTimeStep = 1000;
+    int pushTimeStep = 10;
     int checkSteadyStateTimeStep = 50;
-    double errThreshold = 1e-6;
-    double dt = 1;
+    double errThreshold = 1e-8;
+    double dt = 0.1;
     double dx; //calculated from user param
     double Lbc; //initialized in the constructor
     

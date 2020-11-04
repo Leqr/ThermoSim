@@ -11,6 +11,7 @@
 #include <math.h>
 #include <Eigen/Core>
 #include <Eigen/Dense>
+#include <random>
 
 std::string Simulator::getState(){
     return state;
@@ -18,34 +19,13 @@ std::string Simulator::getState(){
 
 void Simulator::simulate(bool MMS,bool coupled){
     
-    /*
-    //timestep simulation of the program
-    for(int i = 1; i < nTimeStepsCycle*nCycles; ++i){
-        int val = i%nTimeStepsCycle;
-        //updating the state of the simulation (might find a way more efficient but less clean)
-        if (val == durations["charging"]){
-            state = "charging";
-        }
-        if (val == durations["idlecd"]+durations["charging"]){
-            state = "idlecd";
-        }
-        if (val == durations["discharging"]+durations["idlecd"]+durations["charging"]){
-            state = "discharging";
-        }
-        if (val == 0){
-            state = "idledc";
-        }
-        exporter.exportState(state);
-    }
-     */
-    
     //initial temperature
     std::vector<double> sol_fluid(nCells,T0);
     std::vector<double> sol_solid(nCells,T0);
-    std::vector<double> oldsols = sol_solid;
-    std::vector<double> oldsolf = sol_fluid;
+    std::vector<double> oldsol_solid = sol_solid;
+    std::vector<double> oldsol_fluid = sol_fluid;
     
-    Lbc = 500;
+    Lbc = 773;
     
     //bool of ss attained, when both true the program stops
     bool ss_fluid = false;
@@ -62,8 +42,9 @@ void Simulator::simulate(bool MMS,bool coupled){
     }
     
     checkStabCond();
+
     
-    for(int i = 1; i < nTimeStepsCycle; ++i){
+    for(int i = 1; i < nTimeStepsCycle*nCycles; ++i){
         
         
                 
@@ -79,8 +60,24 @@ void Simulator::simulate(bool MMS,bool coupled){
         
         sol_solid.clear();
         sol_fluid.clear();
-        
-        //get the n+1 solution, pass references to the solution to ptimize the speed
+        /*
+        int val = i%nTimeStepsCycle;
+        //updating the state of the simulation (might find a way more efficient but less clean)
+        if (val == durations["charging"]){
+            state = "charging";
+        }
+        if (val == durations["idlecd"]+durations["charging"]){
+            state = "idlecd";
+        }
+        if (val == durations["discharging"]+durations["idlecd"]+durations["charging"]){
+            state = "discharging";
+        }
+        if (val == 0){
+            state = "idledc";
+        }
+        exporter.exportState(state);
+        */
+        //get the n+1 solution, pass references to the solution to optimize the speed
         solveDiff(oldsol_solid,oldsol_fluid,sol_solid,sol_fluid,MMS,coupled);
         
         
@@ -88,6 +85,7 @@ void Simulator::simulate(bool MMS,bool coupled){
         if(MMS){
             
             //normalize the solid solution
+            /*
             double mean = 0;
             for(int i = 0; i < nCells; ++i){
                 //calculate average of solid solution to normalize
@@ -96,7 +94,7 @@ void Simulator::simulate(bool MMS,bool coupled){
             for(int i = 0; i < nCells; ++i){
                 sol_solid[i] -= mean;
             }
-            
+            */
             if ((ss_fluid == false) and (i%this->checkSteadyStateTimeStep)){
                 double err = 0;
                 for(int i = 0; i <nCells;++i){
@@ -148,7 +146,6 @@ void Simulator::simulate(bool MMS,bool coupled){
 }
 
 void Simulator::solveDiff(const std::vector<double> &oldsol_solid,const  std::vector<double> &oldsol_fluid, std::vector<double> &sol_solid, std::vector<double> &sol_fluid,bool MMS,bool coupled){
-
     //Method of Manufactured solutions
     double source_solid = 0;
     double source_fluid = 0;
@@ -232,7 +229,7 @@ void Simulator::solveDiff(const std::vector<double> &oldsol_solid,const  std::ve
     }
     
     //values on the right boundary
-    sol_solid.push_back(oldsol_solid[nCells-1] + (alphaF*dt/(dx*dx))*(oldsol_solid[nCells-2]-oldsol_solid[nCells-1]) + (dt)*source_solid);
+    sol_solid.push_back(oldsol_solid[nCells-1] + (alphaS*dt/(dx*dx))*(oldsol_solid[nCells-2]-oldsol_solid[nCells-1]) + (dt)*source_solid);
     
     sol_fluid.push_back(oldsol_fluid[nCells-1] - (uf*dt/dx)*(oldsol_fluid[nCells-1]-oldsol_fluid[nCells-2]) + (alphaF*dt/(dx*dx))*(oldsol_fluid[nCells-2]-oldsol_fluid[nCells-1])+(dt)*source_fluid);
     
@@ -274,7 +271,6 @@ void Simulator::checkStabCond(){
     
     if(sigma*sigma > sigma + 2*df){
         std::cerr << "The method might not be stable (lower bound)"  << std::endl;
-        std::cout <<sigma*sigma << " " <<sigma + 2*df << std::endl;
     }
     
     if(sigma + 2*df > 1){
@@ -285,9 +281,13 @@ void Simulator::checkStabCond(){
 
 
 void Simulator::OVSNonCoupledDiff(double Pe, int n){
-    this->dt = 2;
+    this->dt = 20;
     this -> n_fluid = n;
     this -> n_solid = n;
+    
+    
+    //std::default_random_engine generator;
+    //std::uniform_real_distribution<double> dist(-0.1,0.1);
     
     std::vector<double> L1F;
     std::vector<double> LinfF;
@@ -307,10 +307,14 @@ void Simulator::OVSNonCoupledDiff(double Pe, int n){
         std::cout << "Number of cells : " << nCells << std::endl;
         //param
         this->dx = height/double(nCells);
-        this->alphaF= (uf*dx*nCells)/Pe;
+
 
         std::cout << "dt : " << dt << std::endl;
         std::cout << "dx : " << dx << std::endl;
+        
+        //this->alphaF = 0.03 * dx *dx /dt;
+        this->uf = (alphaF*Pe)/(dx*nCells);
+        //this->alphaS = 0.03 * dx *dx /dt;
 
  
         //bool of ss attained, when both true the program stops
@@ -325,6 +329,8 @@ void Simulator::OVSNonCoupledDiff(double Pe, int n){
         for(int nc = 0; nc < nCells-1; ++nc){
             solf.push_back(cos(this->k_fluid*nc*dx));
             sols.push_back(cos(this->k_solid*nc*dx));
+            //solf.push_back(cos(this->k_fluid*nc*dx)+dist(generator));
+            //sols.push_back(cos(this->k_solid*nc*dx)+dist(generator));
         }
         
         std::vector<double> oldsols = sols;
@@ -344,7 +350,16 @@ void Simulator::OVSNonCoupledDiff(double Pe, int n){
             
             //get the n+1 solution, pass references to the solution to optimize the speed
             solveDiff(oldsols,oldsolf,sols,solf,true,false);
-            
+            /*
+            double mean = 0;
+            for(int i = 0; i < nCells; ++i){
+                //calculate average of solid solution to normalize
+                mean += (1/double(nCells))*sols[i];
+            }
+            for(int i = 0; i < nCells; ++i){
+                sols[i] -= mean;
+            }
+            */
             //check if steady state is attained
             if (ss_fluid == false){
                 double err = 0;
@@ -393,7 +408,15 @@ void Simulator::OVSNonCoupledDiff(double Pe, int n){
         
         //update dt
         dt = dt/2;
+        
+        
+        std::cout << "L1F : " << L1F[i] << std::endl;
+        std::cout << "LinfF : " <<LinfF[i] << std::endl;
+        std::cout << "L1S : " <<L1S[i] << std::endl;
+        std::cout << "LinfS : " <<LinfS[i] << std::endl;
     }
+
+
     exporter.pushOVS(L1F);
     exporter.pushOVS(LinfF);
     

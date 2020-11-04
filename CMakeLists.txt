@@ -1,5 +1,5 @@
 project(CFDSim)
-set(CMAKE_CXX_FLAGS "-O3 -W -Wall -pedantic -std=c++11")
+set(CMAKE_CXX_FLAGS "-W -Wall -pedantic -std=c++11")
 
 find_package (Eigen3 3.3 REQUIRED NO_MODULE)
 
