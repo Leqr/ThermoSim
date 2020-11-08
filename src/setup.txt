@@ -3,25 +3,25 @@ height:
 diameter:
 3
 nCells:
-256
+32
 T0:
 288
 nCycles:
-10
+2
 nTimeStepsCycle:
-3000
-charging state duration (seconds):
-50
-idle charging-discharging state duration (seconds):
-50
-discharging state duration (seconds):
-50
-idle discharging-charging state duration (seconds):
-50
+6000
+charging state duration (seconds int):
+100
+idle charging-discharging state duration (seconds int):
+700
+discharging state duration (seconds int):
+100
+idle discharging-charging state duration (seconds int):
+700
 alphaF:
-2e-7
+2e-2
 alphaS:
-9e-7
+9e-2
 uf:
 0.1
 hvs:

@@ -18,7 +18,7 @@ class Simulator {
     private:
     
     // initialised by the user
-    std::unordered_map<std::string, double> durations;
+    std::unordered_map<std::string, int> durations;
     double height;
     double diameter;
     int nCells;
@@ -34,18 +34,25 @@ class Simulator {
     double hvs;
     
     //simulation parameters
-    int pushTimeStep = 10;
+    int pushTimeStep = 100;
     int checkSteadyStateTimeStep = 50;
     double errThreshold = 1e-8;
-    double dt = 0.1;
+    double dt;
     double dx; //calculated from user param
     double Lbc; //initialized in the constructor
+    double Rbc;
+    double sim_uf;
     
     //Method of Manufactured solutions parameters
     double n_fluid = 1.0;
     double n_solid = 1.0;
     double k_fluid;
     double k_solid;
+    
+    //for checking with an analytic solution
+    std::vector<double> analyticDataFluid;
+    std::vector<double> analyticDataSolid;
+    std::vector<double> analyticDataX;
     
     
     public:
@@ -55,6 +62,7 @@ class Simulator {
     //Solvers and OVS
     void solveDiff(const std::vector<double> &oldsols,const std::vector<double> &oldsolf,std::vector<double> &sols, std::vector<double> &solf, bool MMS = false,bool coupled = false);
     void OVSNonCoupledDiff(double Pe,int n);
+    void getReatSol();
     
     //Utility functions
     std::string getState();
@@ -63,7 +71,7 @@ class Simulator {
     double LinfError(const std::vector<double> &numSol,const std::vector<double> &analySol);
     
     //Constructor
-    Simulator(std::unordered_map<std::string, double> durations,
+    Simulator(std::unordered_map<std::string, int> durations,
               double height,
               double diameter,
               int nCells,

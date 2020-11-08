@@ -22,7 +22,7 @@ int main(){
     double T0;
     int nCycles;
     int nTimeStepsCycle;
-    std::unordered_map<std::string, double> durations;
+    std::unordered_map<std::string, int> durations;
     double alphaF;
     double alphaS;
     double uf;
@@ -31,9 +31,15 @@ int main(){
     
     //open the setup.txt file
     std::ifstream setup;
-    setup.open("../../src/setup.txt");
+    
+    
+    //setup.open("../../src/setup.txt");
+    //setup file for part 5 of the project
+    setup.open("../../src/setuppr5.txt");
+    
+    
     if( !setup.is_open()) {
-       std::cerr << "Error: file could not be opened" << std::endl;
+       std::cerr << "Error: setup file could not be opened" << std::endl;
        exit(1);
     }
     
@@ -61,16 +67,16 @@ int main(){
                 nTimeStepsCycle = std::stoi(line);
                 break;
             case 14:
-                durations["charging"] = std::stod(line);
+                durations["charging"] = std::stoi(line);
                 break;
             case 16:
-                durations["idlecd"] = std::stod(line);
+                durations["idlecd"] = std::stoi(line);
                 break;
             case 18:
-                durations["discharging"] = std::stod(line);
+                durations["discharging"] = std::stoi(line);
                 break;
             case 20:
-                durations["idledc"] = std::stod(line);
+                durations["idledc"] = std::stoi(line);
                 break;
             case 22:
                 alphaF = std::stod(line);
@@ -96,7 +102,6 @@ int main(){
 
     //run the simulation
     Simulator sim(durations,height,diameter,nCells,T0,nCycles,nTimeStepsCycle,exporter,alphaF,alphaS,uf,hvs,hvf);
-    
     //sim.OVSNonCoupledDiff(1,2);
     sim.simulate(false,true);
    
