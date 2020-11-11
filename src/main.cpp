@@ -13,7 +13,7 @@
 #include <string>
 #include <fstream>
 
-int main(){
+int main(int argc, char** argv){
     
     //parameters for the simulation
     double height;
@@ -31,11 +31,19 @@ int main(){
     
     //open the setup.txt file
     std::ifstream setup;
+        
+    //setup for last part, total simulation
+    setup.open("../../src/setup.txt");
     
-    
-    //setup.open("../../src/setup.txt");
     //setup file for part 5 of the project
-    setup.open("../../src/setuppr5.txt");
+    //setup.open("../../src/setuppr5.txt");
+    
+    //setup file for MMS
+    //setup.open("../../src/setupMMS.txt");
+    
+    //setup file for non coupled OVS
+    //setup.open("../../src/setupOVS.txt");
+
     
     
     if( !setup.is_open()) {
@@ -102,56 +110,8 @@ int main(){
 
     //run the simulation
     Simulator sim(durations,height,diameter,nCells,T0,nCycles,nTimeStepsCycle,exporter,alphaF,alphaS,uf,hvs,hvf);
-    //sim.OVSNonCoupledDiff(1,2);
+    
+    //sim.OVSNonCoupledDiff(1,4);
     sim.simulate(false,true);
    
 }
-
-/*
- ******************************************************************************
- Deprecated, for reference
- ******************************************************************************
-*/
-
-/*
-void testReader(){
-    
-    std::vector <double> v1 {
-        1,
-        2,
-        3,
-        4,
-        5
-    };
-    std::vector <double> v2 {
-           1,
-           2,
-           3,
-           45,
-           55
-       };
-    
-    std::vector <double> w1 {
-        2,
-        2,
-        3,
-        4,
-        5
-    };
-    std::vector <double> w2 {
-           2,
-           2,
-           3,
-           45,
-           55
-    };
-    
-    Exporter exporter;
-
-    std::vector<std::vector <double>> v{v1,v2};
-    std::vector<std::vector <double>> w{w1,w2};
-
-    exporter.fexport(v,w);
-    
-}
- */

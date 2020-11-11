@@ -1,103 +1,36 @@
 height:
-10
+23.873241463784
 diameter:
-3
+1
 nCells:
-32
+256
 T0:
-288
+288.15
 nCycles:
-2
+10
 nTimeStepsCycle:
-6000
+1000
 charging state duration (seconds int):
-100
+21600
 idle charging-discharging state duration (seconds int):
-700
+21600
 discharging state duration (seconds int):
-100
+21600
 idle discharging-charging state duration (seconds int):
-700
+21600
 alphaF:
-2e-2
+4.6870635172099605e-07
 alphaS:
-9e-2
+1.4245014245014244e-06
 uf:
-0.1
+0.00017347099413190994
 hvs:
-0.1
+0.0007983364230611756
 hvf:
-0.1
-eps:
-0.4
+0.0010097658299869049
 
-real values :
-alphaF:
-2e-7
-alphaS:
-9e-7
-uf:
-0.1
-hvs:
-1000
-hvf:
-1000
-eps:
-0.4
-
-
-
-
-OVS setups :
-pe = 1
-alphaS:
-0.05
-uf:
-0.05
-
-pe = 0.001
-alphaS:
-0.03
-uf:
-0.000003
-
-pe = 1000
-alphaS:
-0.003
-uf:
-0.03
-
-
-
-height:
-10
-diameter:
-3
-nCells:
-1024
-T0:
-288
-nCycles:
-10
-nTimeStepsCycle:
-5000000
-charging state duration:
-50
-idle charging-discharging state duration:
-50
-discharging state duration:
-50
-idle discharging-charging state duration:
-50
-alphaF:
-0.0000001
-alphaS:
-0.0000005
-uf:
-0.0001
-hvs:
-0.1
-hvf:
-0.1
-eps:
-0.4
+d=4 height : 23.8732414637843, hvf : 0.0010097658299869049, hvs : 0.0007983364230611756
+d=5 height : 15.278874536821952, hvf : 0.0007526205128179522, hvs : 0.000595033373364737
+d=6 height : 10.61032953945969, hvf : 0.0005915355992713366, hvs : 0.00046767715881389265
+d=7 height : 7.795344151439773, hvf : 0.0004823710770019686, hvs : 0.00038137000556546125
+d=8 height : 5.968310365946075, hvf : 0.0004041410749655082, hvs : 0.0003195201606339228

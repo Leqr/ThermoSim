@@ -34,7 +34,7 @@ class Simulator {
     double hvs;
     
     //simulation parameters
-    int pushTimeStep = 100;
+    int pushTimeStep = 1;
     int checkSteadyStateTimeStep = 50;
     double errThreshold = 1e-8;
     double dt;
@@ -62,7 +62,7 @@ class Simulator {
     //Solvers and OVS
     void solveDiff(const std::vector<double> &oldsols,const std::vector<double> &oldsolf,std::vector<double> &sols, std::vector<double> &solf, bool MMS = false,bool coupled = false);
     void OVSNonCoupledDiff(double Pe,int n);
-    void getReatSol();
+    
     
     //Utility functions
     std::string getState();

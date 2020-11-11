@@ -9,8 +9,6 @@
 #include <unordered_map>
 #include <iostream>
 #include <math.h>
-#include <Eigen/Core>
-#include <Eigen/Dense>
 #include <random>
 #include <string>
 #include <fstream>
@@ -28,7 +26,7 @@ void Simulator::simulate(bool MMS,bool coupled){
     std::vector<double> oldsol_fluid = sol_fluid;
 
     Lbc = 873;
-    Rbc = T0;
+    Rbc = 293;
 
     sim_uf = this->uf;
     
@@ -54,8 +52,6 @@ void Simulator::simulate(bool MMS,bool coupled){
         if ((i%this->pushTimeStep == 0) or (i == nTimeStepsCycle*nCycles-1)){
             exporter.pushSolid(sol_solid);
             exporter.pushFluid(sol_fluid);
-            std::cout << i << std::endl;
-
         }
 
         std::vector<double> oldsol_solid = sol_solid;
@@ -214,8 +210,6 @@ void Simulator::solveDiff(const std::vector<double> &oldsol_solid,const  std::ve
 
         if(state == "charging" or state == "idlecd"){
             //solid
-            double v;
-            v =(alphaS*dt/(dx*dx))*(oldsol_solid[j+1]-2*oldsol_solid[j]+ oldsol_solid[j-1]);
             sol_solid.push_back(oldsol_solid[j] + (alphaS*dt/(dx*dx))*(oldsol_solid[j+1]-2*oldsol_solid[j]+ oldsol_solid[j-1]) + (dt)*source_solid);
 
             //fluid
@@ -232,14 +226,14 @@ void Simulator::solveDiff(const std::vector<double> &oldsol_solid,const  std::ve
 
         if(coupled){
             //solve the coupled equation one step behind to optimize memory
-            Eigen::Matrix2d A;
-            A << (1+hvf*dt), (-hvf*dt), (-hvs*dt), (1+hvs*dt);
-            Eigen::Vector2d b(sol_fluid[j-1],sol_solid[j-1]);
-            Eigen::Vector2d x = A.colPivHouseholderQr().solve(b);
+            
+            double new_Tf = (sol_fluid[j-1] + hvf*dt*sol_solid[j-1])/(1+hvf*dt);
+            double new_Ts = (sol_solid[j-1] + hvs*dt*sol_fluid[j-1]/(1+hvf*dt))/(1+hvs*dt-(hvs*hvf*dt*dt/(1+hvf*dt)));
+
 
             //puts the coupled solution back in
-            sol_solid[j-1] = x(1);
-            sol_fluid[j-1] = x(0);
+            sol_solid[j-1] = new_Ts;
+            sol_fluid[j-1] = new_Tf;
         }
     }
 
@@ -277,21 +271,20 @@ void Simulator::solveDiff(const std::vector<double> &oldsol_solid,const  std::ve
 
     if(coupled){
         //solve the coupled equation one step behind to optimize memory
-        Eigen::Matrix2d A;
-        A << (1+hvf*dt), (-hvf*dt), (-hvs*dt), (1+hvs*dt);
-        Eigen::Vector2d b(sol_fluid[nCells-2],sol_solid[nCells-2]);
-        Eigen::Vector2d x = A.colPivHouseholderQr().solve(b);
+        
+        double new_Tf = (sol_fluid[nCells-2] + hvf*dt*sol_solid[nCells-2])/(1+hvf*dt);
+        double new_Ts = (sol_solid[nCells-2] + hvs*dt*sol_fluid[nCells-2]/(1+hvf*dt))/(1+hvs*dt-(hvs*hvf*dt*dt/(1+hvf*dt)));
 ;
 
         //puts the coupled solution back in
-        sol_solid[nCells-2] = x(1);
-        sol_fluid[nCells-2] = x(0);
+        sol_solid[nCells-2] = new_Ts;
+        sol_fluid[nCells-2] = new_Tf;
+        
+        new_Tf = (sol_fluid[nCells-1] + hvf*dt*sol_solid[nCells-1])/(1+hvf*dt);
+        new_Ts = (sol_solid[nCells-1] + hvs*dt*sol_fluid[nCells-1]/(1+hvf*dt))/(1+hvs*dt-(hvs*hvf*dt*dt/(1+hvf*dt)));
 
-        b(0) = sol_fluid[nCells-1];
-        b(1) = sol_solid[nCells-1];
-        x = A.colPivHouseholderQr().solve(b);
-        sol_solid[nCells-1] = x(1);
-        sol_fluid[nCells-1] = x(0);
+        sol_solid[nCells-1] = new_Ts;
+        sol_fluid[nCells-1] = new_Tf;
     }
 
 
@@ -330,7 +323,7 @@ void Simulator::OVSNonCoupledDiff(double Pe, int n){
     this->dt = 20;
     this -> n_fluid = n;
     this -> n_solid = n;
-
+    this->sim_uf = uf;
 
     //std::default_random_engine generator;
     //std::uniform_real_distribution<double> dist(-0.1,0.1);
@@ -470,32 +463,6 @@ void Simulator::OVSNonCoupledDiff(double Pe, int n){
     exporter.pushOVS(LinfS);
 
 }
-
-void Simulator::getReatSol(){
-    std::ifstream analyticData;
-    analyticData.open("../../Guidelines/sol-exact-5.00000E+03.dat");
-    if( !analyticData.is_open()) {
-       std::cerr << "Error: analytic data file could not be opened" << std::endl;
-       exit(1);
-    }
- 
-    //read the parameters
-    std::string line;
-    int i = 0;
-    while(getline(analyticData, line)){
-        if(i != 0){
-            std::vector<std::string> result;
-            std::istringstream iss(line);
-            for(std::string s; iss >> s; )
-                result.push_back(s);
-            analyticDataX.push_back(std::stod(result[0]));
-            analyticDataFluid.push_back(std::stod(result[1]));
-            analyticDataSolid.push_back(std::stod(result[2]));
-        }
-        ++i;
-    }
-}
-    
 
 double Simulator::L1Error(const std::vector<double> &numSol,const std::vector<double> &analySol){
     if(numSol.size() == analySol.size()){

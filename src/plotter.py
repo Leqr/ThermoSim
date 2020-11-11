@@ -196,7 +196,7 @@ def OVSNC(plotsolid):
 def plotvscos(sol,ncells,n):
     plt.plot(sol[-1])
     plt.plot([np.cos(2*3.14*n/10*x) for x in np.linspace(0,10,ncells)],label = "real cos")
-    plt.suptitle("nC=32,Ts,n=1,ds=5.1e-5")
+    plt.suptitle("Tf,nC=512,n=1")
     plt.legend()
     plt.show()
 
@@ -213,15 +213,29 @@ def plotvsreal(computed,real):
     plt.legend()
     plt.show()
 
+def getH_fFromD(d):
+    uf = 10/(np.pi*1835*np.power(d/2,2)*0.4)
+    Re = 0.4*1835.6*uf*0.03/2.63
+    Pr = 2.63*1511/0.52
+    Nufs = (0.255/0.4)*np.power(Pr,1/3)*np.power(Re,2/3)
+    hfs = Nufs*(0.52/0.03)
+    h = 1/((1/hfs)+(0.03/(10*2.0)))
+    hv = h*6*0.6/0.03
+    hvf = hv/(0.4*1835.6*1511.8)
+    hvs = hv/(0.6*2600*900)
+    height = 300/(np.pi*np.power(d/2,2))
+    print("height : " + str(height) + ", hvf : " + str(hvf) + ", hvs : "+str(hvs))
+
+
+
 if __name__ == "__main__":
 
-    nCells = 1024
+    nCells = 256
 
     sol_fluid,sol_solid = importComputedSols()
-    x,real_sol_fluid,real_sol_solid = importRealSols()
 
     '''Plots a Movie with the two computed solutions'''
-    #plotMovDouble(nCells,len(sol_solid),[sol_fluid,sol_solid])
+    plotMovDouble(nCells,len(sol_solid),[sol_fluid,sol_solid])
 
     sol = sol_fluid
 
@@ -229,15 +243,22 @@ if __name__ == "__main__":
     #plotMov(nCells,len(sol),sol)
 
     '''Plot the last computed solution against a cosine for MMS '''
-    k = 1
-    #plotvscos(sol,nCells,k)
+    #n = 1
+    #plotvscos(sol,nCells,n)
 
     '''Plots the OVS results'''
-    #OVSNC(false)
+    #OVSNC(True)
 
     '''Plots the state trace of the simulation'''
     #readState()
 
     '''Plots the analytical solution against the computed sol'''
-    nCells = 1024
-    plotvsreal((sol_fluid,sol_solid),(x,real_sol_fluid,real_sol_solid))
+    #x,real_sol_fluid,real_sol_solid = importRealSols()
+    #nCells = 1024
+    #plotvsreal((sol_fluid,sol_solid),(x,real_sol_fluid,real_sol_solid))
+
+    '''Calculate the hvs and hvf values depending on D'''
+    '''
+    for d in [4.0,5.0,6.0,7.0,8.0]:
+        getH_fFromD(d)
+    '''
