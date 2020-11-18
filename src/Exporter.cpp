@@ -47,7 +47,7 @@ void Exporter::pushOVS(const std::vector<double> &l){
     ovsdata << std::endl;
 }
 
-Exporter::Exporter()
+Exporter::Exporter(std::string pathToSrc):pathToSrc(pathToSrc)
 {
 
     outdatastate.open("stateCFD.txt");

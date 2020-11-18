@@ -2,9 +2,11 @@ import matplotlib.pyplot as plt
 from matplotlib import animation
 import numpy as np
 from matplotlib.animation import FuncAnimation
+import sys
+import os
 
-def importRealSols():
-    s = open("sol-exact-5.00000E+03.dat")
+def importRealSols(pathToSrc):
+    s = open(pathToSrc+"sol-exact-5.00000E+03.dat")
 
     x = []
     fluid = []
@@ -25,9 +27,9 @@ def importRealSols():
 
     return (x,fluid,solid)
 
-def importComputedSols():
+def importComputedSols(pathToBuild):
     #loading the solutions
-    ffluid = open("../build/debug/fluid.txt")
+    ffluid = open(pathToBuild+"fluid.txt")
 
     solsf = []
 
@@ -38,7 +40,7 @@ def importComputedSols():
             af.append(float(val))
         solsf.append(af)
 
-    fsolid = open("../build/debug/solid.txt")
+    fsolid = open(pathToBuild+"solid.txt")
 
     solss = []
 
@@ -52,8 +54,8 @@ def importComputedSols():
     return (solsf,solss)
 
 
-def readState():
-    s = open("../build/debug/stateCFD.txt")
+def readState(pathToBuild):
+    s = open(pathToBuild+"stateCFD.txt")
 
     statedata = s.readlines()
 
@@ -81,7 +83,7 @@ def plotMov(nCells,nTimeStep,sol):
 
     # call the animator.  blit=True means only re-draw the parts that have changed.
     anim = animation.FuncAnimation(fig, animate, init_func=ini,
-                                   frames=nTimeStep, interval=5,blit = True)
+                                   frames=nTimeStep, interval=5,blit = False)
     plt.show()
 
 def plotMovDouble(nCells,nTimeStep,sol):
@@ -109,13 +111,13 @@ def plotMovDouble(nCells,nTimeStep,sol):
         return ln0, ln1,
 
     ani = FuncAnimation(fig, animate, init_func=init,
-                                   frames=nTimeStep, interval=5, blit = True)
+                                   frames=nTimeStep, interval=5, blit = False)
     plt.legend()
     plt.show()
 
-def OVSNC(plotsolid):
+def OVSNC(plotsolid,pathToBuild):
     #ovs = open("../Data/OVSNonCoupled3/ovsNCn=1,Pe=1.txt")
-    ovs = open("../build/debug/ovs.txt")
+    ovs = open(pathToBuild+"ovs.txt")
 
     ovsdata = []
 
@@ -129,63 +131,62 @@ def OVSNC(plotsolid):
     fig, axs = plt.subplots(2, 2)
     vals = [8,16,32,64,128,256,512,1024]
     if plotsolid:
-        axs[0, 0].plot([np.log(10/n) for n in vals],[np.log(val) for val in ovsdata[2]], 'tab:green',marker=".")
+        axs[0, 0].plot([np.log(1.0/n) for n in vals],[np.log(val) for val in ovsdata[2]],marker=".")
         axs[0, 0].set_title('L1 norm for Ts, n = 4')
         axs[0, 0].set_ylabel('Log(E)')
         axs[0, 0].set_xlabel('Log(h)')
         axs[0, 0].set_ylim([-8,10])
 
 
-        axs[0, 1].plot([np.log(10/n) for n in vals],[np.log(val) for val in ovsdata[3]], 'tab:orange',marker=".")
+        axs[0, 1].plot([np.log(1.0/n) for n in vals],[np.log(val) for val in ovsdata[3]],marker=".")
         axs[0, 1].set_title('Linf norm for Ts, n = 4')
         axs[0, 1].set_ylabel('Log(E)')
         axs[0, 1].set_xlabel('Log(h)')
         axs[0, 1].set_ylim([-8,10])
 
         #y = [np.log(np.abs((ovsdata[2][i+1]-ovsdata[2][i])/(ovsdata[2][i]-ovsdata[2][i-1])))/np.log(1/2) for i in range(1,len(ovsdata[2])-1)]
-        y = [np.log(ovsdata[2][i]/ovsdata[2][i-1])/np.log(1/2) for i in range(1,len(ovsdata[2]))]
+        y = [np.log(ovsdata[2][i]/ovsdata[2][i-1])/np.log(0.5) for i in range(1,len(ovsdata[2]))]
 
-        axs[1, 0].plot([np.log(10/n) for n in vals[1:]],y ,'tab:green',marker=".")
+        axs[1, 0].plot([np.log(1.0/n) for n in vals[1:]],y ,marker=".")
         axs[1, 0].set_ylabel('p')
         axs[1, 0].set_xlabel('Log(h)')
         axs[1, 0].set_ylim([0,4])
 
         #y2 = [np.log(np.abs((ovsdata[3][i+1]-ovsdata[3][i])/(ovsdata[3][i]-ovsdata[3][i-1])))/np.log(1/2) for i in range(1,len(ovsdata[3])-1)]
-        y2 = [np.log(ovsdata[3][i]/ovsdata[3][i-1])/np.log(1/2) for i in range(1,len(ovsdata[3]))]
+        y2 = [np.log(ovsdata[3][i]/ovsdata[3][i-1])/np.log(0.5) for i in range(1,len(ovsdata[3]))]
 
 
-        axs[1, 1].plot([np.log(10/n) for n in vals[1:]],y2, 'tab:orange',marker=".")
+        axs[1, 1].plot([np.log(1.0/n) for n in vals[1:]],y2,marker=".")
         axs[1, 1].set_ylabel('p')
         axs[1, 1].set_xlabel('Log(h)')
         axs[1, 1].set_ylim([0,4])
 
 
     else:
-        fig, axs = plt.subplots(2, 2)
 
-        axs[0, 0].plot([np.log(10/n) for n in vals],[np.log(val) for val in ovsdata[0]], 'tab:green',marker=".")
+        axs[0, 0].plot([np.log(1.0/n) for n in vals],[np.log(val) for val in ovsdata[0]],marker=".")
         axs[0, 0].set_title('L1 norm for Tf, n = 1, Pe = 1')
         axs[0, 0].set_ylabel('Log(E)')
         axs[0, 0].set_xlabel('Log(h)')
         axs[0, 0].set_ylim([-8,10])
 
-        axs[0, 1].plot([np.log(10/n) for n in vals],[np.log(val) for val in ovsdata[1]], 'tab:orange',marker=".")
+        axs[0, 1].plot([np.log(1.0/n) for n in vals],[np.log(val) for val in ovsdata[1]],marker=".")
         axs[0, 1].set_title('Linf norm for Tf, n = 1, Pe = 1')
         axs[0, 1].set_ylabel('Log(E)')
         axs[0, 1].set_xlabel('Log(h)')
         axs[0, 1].set_ylim([-8,10])
 
         #y = [np.log(np.abs((ovsdata[0][i+1]-ovsdata[0][i])/(ovsdata[0][i]-ovsdata[0][i-1])))/np.log(1/2) for i in range(1,len(ovsdata[0])-1)]
-        y = [np.log(ovsdata[0][i]/ovsdata[0][i-1])/np.log(1/2) for i in range(1,len(ovsdata[0]))]
-        axs[1, 0].plot([np.log(10/n) for n in vals[1:]],y ,'tab:green',marker=".")
+        y = [np.log(ovsdata[0][i]/ovsdata[0][i-1])/np.log(0.5) for i in range(1,len(ovsdata[0]))]
+        axs[1, 0].plot([np.log(1.0/n) for n in vals[1:]],y ,marker=".")
         axs[1, 0].set_ylabel('p')
         axs[1, 0].set_xlabel('Log(h)')
         axs[1, 0].set_ylim([0,4])
 
         #y2 = [np.log(np.abs((ovsdata[1][i+1]-ovsdata[1][i])/(ovsdata[1][i]-ovsdata[1][i-1])))/np.log(1/2) for i in range(1,len(ovsdata[1])-1)]
-        y2 = [np.log(ovsdata[1][i]/ovsdata[1][i-1])/np.log(1/2) for i in range(1,len(ovsdata[1]))]
+        y2 = [np.log(ovsdata[1][i]/ovsdata[1][i-1])/np.log(0.5) for i in range(1,len(ovsdata[1]))]
 
-        axs[1, 1].plot([np.log(10/n) for n in vals[1:]],y2, 'tab:orange',marker=".")
+        axs[1, 1].plot([np.log(1.0/n) for n in vals[1:]],y2,marker=".")
         axs[1, 1].set_ylabel('p')
         axs[1, 1].set_xlabel('Log(h)')
         axs[1, 1].set_ylim([0,4])
@@ -194,9 +195,9 @@ def OVSNC(plotsolid):
     plt.show()
 
 def plotvscos(sol,ncells,n):
-    plt.plot(sol[-1])
+    plt.plot(sol[-1],label = "numerical solution")
     plt.plot([np.cos(2*3.14*n/10*x) for x in np.linspace(0,10,ncells)],label = "real cos")
-    plt.suptitle("Tf,nC=512,n=1")
+    plt.suptitle("Ts,nC=256,n=1")
     plt.legend()
     plt.show()
 
@@ -230,14 +231,28 @@ def getH_fFromD(d):
 
 if __name__ == "__main__":
 
-    nCells = 128
+    pathToBuild = ""
+    pathToSrc = ""
 
-    sol_fluid,sol_solid = importComputedSols()
+    mode = -1
+    try :
+        mode = int(sys.argv[1])
+        pathToBuild = ""
+        pathToSrc = "../../src/"
+
+    except :
+        # no argument passed, means manual run of the script for debugging
+        mode = -1
+        pathToBuild = "../build/Debug/"
+        pathToSrc = ""
+
+    sol_fluid,sol_solid = importComputedSols(pathToBuild)
+
+    sol = sol_solid
 
     '''Plots a Movie with the two computed solutions'''
-    plotMovDouble(nCells,len(sol_solid),[sol_fluid,sol_solid])
-
-    sol = sol_fluid
+    #nCells = 128
+    #plotMovDouble(nCells,len(sol_solid),[sol_fluid,sol_solid])
 
     '''Plots a Movie with one computed solution'''
     #plotMov(nCells,len(sol),sol)
@@ -247,13 +262,13 @@ if __name__ == "__main__":
     #plotvscos(sol,nCells,n)
 
     '''Plots the OVS results'''
-    #OVSNC(False)
+    #OVSNC(False,pathToBuild)
 
     '''Plots the state trace of the simulation'''
     #readState()
 
     '''Plots the analytical solution against the computed sol'''
-    #x,real_sol_fluid,real_sol_solid = importRealSols()
+    #x,real_sol_fluid,real_sol_solid = importRealSols(pathToSrc)
     #nCells = 1024
     #plotvsreal((sol_fluid,sol_solid),(x,real_sol_fluid,real_sol_solid))
 
@@ -262,3 +277,25 @@ if __name__ == "__main__":
     for d in [4.0,5.0,6.0,7.0,8.0]:
         getH_fFromD(d)
     '''
+
+    #mode ran from c++ code
+    if mode == 0 :
+        '''Plot the last computed solution against a cosine for MMS '''
+        n = 1
+        nCells = 256
+        plotvscos(sol,nCells,n)
+    if mode == 1 :
+        '''Plots the OVS results'''
+        OVSNC(True,pathToBuild)
+    if mode == 2 :
+        '''Plots the OVS results'''
+        OVSNC(True,pathToBuild)
+    if mode == 3:
+        '''Plots the analytical solution against the computed sol'''
+        x,real_sol_fluid,real_sol_solid = importRealSols(pathToSrc)
+        nCells = 1024
+        plotvsreal((sol_fluid,sol_solid),(x,real_sol_fluid,real_sol_solid))
+    if mode == 4:
+        '''Plots a Movie with the two computed solutions'''
+        nCells = 128
+        plotMovDouble(nCells,len(sol_solid),[sol_fluid,sol_solid])

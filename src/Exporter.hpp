@@ -21,6 +21,7 @@ class Exporter {
     std::ofstream fluidtempdata;
     std::ofstream solidtempdata;
     std::ofstream ovsdata;
+    std::string pathToSrc;
 
     
     public:
@@ -30,7 +31,7 @@ class Exporter {
     void pushSolid(const std::vector<double> &solidtemp);
     void pushOVS(const std::vector<double> &l);
     void exportState(std::string state);
-    Exporter();
+    Exporter(std::string pathToSrc);
     ~Exporter();
     
     

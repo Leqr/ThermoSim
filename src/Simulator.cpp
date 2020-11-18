@@ -64,6 +64,9 @@ void Simulator::simulate(bool MMS,bool coupled){
         if (val == nTimeStepsCycle*durations["charging"]/total_time_cycle){
             this->state = "idlecd";
             sim_uf = 0;
+            if(!MMS){
+                std::cout << "Temperature difference between beginning and end of charging : " << oldsol_fluid.back()-T0 << std::endl;
+            }
         }
         if (val == nTimeStepsCycle*(durations["idlecd"]+durations["charging"])/total_time_cycle){
             this->state = "discharging";
@@ -350,6 +353,10 @@ void Simulator::OVS(double Pe, int n, bool coupled){
     if(coupled){
         this -> n_fluid = 2;
         this -> n_solid = 1;
+        
+        std::cout << "Coupled equations OVS with Pe = " << Pe << std::endl;
+    }else{
+        std::cout << "Non coupled equations OVS with Pe = " << Pe << " and n = " << n <<  std::endl;
     }
 
     //std::default_random_engine generator;

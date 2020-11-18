@@ -12,8 +12,47 @@
 #include <unordered_map>
 #include <string>
 #include <fstream>
+#include<stdlib.h>
 
 int main(int argc, char** argv){
+    
+    std::string pathToSrc("../../src/");
+    int mode = 4;
+    
+    //mdoe setup from executable call
+    //mode = *argv[0];
+    
+    //open the setup.txt file
+    std::ifstream setup;
+    
+    switch(mode){
+        case 0:
+            //setup file for MMS
+            setup.open(pathToSrc + "setupMMS.txt");
+            break;
+        case 1:
+            //setup file for non coupled OVS
+            setup.open(pathToSrc + "setupOVS.txt");
+            break;
+        case 2:
+            //setup file for coupled OVS
+            setup.open(pathToSrc + "setupOVS.txt");
+            break;
+        case 3:
+            //setup file for part 5 of the project
+            setup.open(pathToSrc + "setuppr5.txt");
+            break;
+        case 4:
+            //setup for last part, total simulation
+            setup.open(pathToSrc + "setup.txt");
+            break;
+    }
+
+    
+    if( !setup.is_open()) {
+       std::cerr << "Error: setup file could not be opened" << std::endl;
+       exit(1);
+    }
     
     //parameters for the simulation
     double height;
@@ -28,28 +67,6 @@ int main(int argc, char** argv){
     double uf;
     double hvs;
     double hvf;
-    
-    //open the setup.txt file
-    std::ifstream setup;
-        
-    //setup for last part, total simulation
-    setup.open("../../src/setup.txt");
-    
-    //setup file for part 5 of the project
-    //setup.open("../../src/setuppr5.txt");
-    
-    //setup file for MMS
-    //setup.open("../../src/setupMMS.txt");
-    
-    //setup file for non coupled OVS
-    //setup.open("../../src/setupOVS.txt");
-
-    
-    
-    if( !setup.is_open()) {
-       std::cerr << "Error: setup file could not be opened" << std::endl;
-       exit(1);
-    }
     
     //read the parameters
     std::string line;
@@ -106,12 +123,48 @@ int main(int argc, char** argv){
     }
 
     //initialize the time serie exporter
-    Exporter exporter;
+    Exporter exporter(pathToSrc);
 
-    //run the simulation
+    //initialize the simulator
     Simulator sim(durations,height,diameter,nCells,T0,nCycles,nTimeStepsCycle,exporter,alphaF,alphaS,uf,hvs,hvf);
-    
-    //sim.OVS(0.001,1,false);
-    sim.simulate(false,true);
-   
+    std::string cmd;
+    switch(mode){
+        case 0:
+            //solve the uncoupled equation with MMS source term and plot it
+            sim.simulate(true,false);
+            cmd = "python " + pathToSrc + "plotter.py 0";
+             system(cmd.c_str());
+            break;
+            
+        case 1:
+            //non coupled OVS and plot
+            sim.OVS(1,1,false);
+            cmd = "python " + pathToSrc + "plotter.py 1";
+            system(cmd.c_str());
+
+            break;
+            
+        case 2:
+            //coupled OVS and plot
+            sim.OVS(1,0,true);
+            cmd = "python " + pathToSrc + "plotter.py 2";
+            system(cmd.c_str());
+            break;
+
+        case 3:
+            //solve the coupled equation for part 5 and plots the result
+            sim.simulate(false,true);
+            cmd = "python " + pathToSrc + "plotter.py 3";
+            system(cmd.c_str());
+            break;
+            
+        case 4:
+            //solve the coupled equation for design study and plots the result + show the exergy and capacity in the terminal
+            sim.simulate(false,true);
+            cmd = "python " + pathToSrc + "plotter.py 4";
+            system(cmd.c_str());
+            break;
+        
+    }
+    return 0;
 }
