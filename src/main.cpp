@@ -111,7 +111,7 @@ int main(int argc, char** argv){
     //run the simulation
     Simulator sim(durations,height,diameter,nCells,T0,nCycles,nTimeStepsCycle,exporter,alphaF,alphaS,uf,hvs,hvf);
     
-    //sim.OVSNonCoupledDiff(1,4);
+    //sim.OVS(0.001,1,false);
     sim.simulate(false,true);
    
 }

@@ -34,7 +34,7 @@ class Simulator {
     double hvs;
     
     //simulation parameters
-    int pushTimeStep = 1;
+    int pushTimeStep = 10;
     int checkSteadyStateTimeStep = 50;
     double errThreshold = 1e-8;
     double dt;
@@ -42,6 +42,18 @@ class Simulator {
     double Lbc; //initialized in the constructor
     double Rbc;
     double sim_uf;
+    double maximumThermalEnergy;
+    
+    //parameters for last part of the project (storage design study)
+    double ThermalEnergyBefChar;
+    double ThermalEnergyBefDischar;
+    std::vector<double> capacityFactors;
+    std::vector<double> exergyEfficiencies;
+    double fluxdout;
+    double fluxdin;
+    double fluxcout;
+    double fluxcin;
+
     
     //Method of Manufactured solutions parameters
     double n_fluid = 1.0;
@@ -61,7 +73,7 @@ class Simulator {
     
     //Solvers and OVS
     void solveDiff(const std::vector<double> &oldsols,const std::vector<double> &oldsolf,std::vector<double> &sols, std::vector<double> &solf, bool MMS = false,bool coupled = false);
-    void OVSNonCoupledDiff(double Pe,int n);
+    void OVS(double Pe,int n,bool coupled = false);
     
     
     //Utility functions
@@ -69,6 +81,8 @@ class Simulator {
     void checkStabCond();
     double L1Error(const std::vector<double> &numSol,const std::vector<double> &analySol);
     double LinfError(const std::vector<double> &numSol,const std::vector<double> &analySol);
+    double computeStoredThermalEnergy(std::vector<double> &sols, std::vector<double> &solf);
+    void computeNextExergyFlux(std::vector<double> &oldsolf,std::vector<double> &solf);
     
     //Constructor
     Simulator(std::unordered_map<std::string, int> durations,
@@ -84,10 +98,6 @@ class Simulator {
               double uf,
               double hvs,
               double hvf);
-    
-    /******************** Deprecated ******************/
-    void solveNonCoupledDiff(bool MMS = false);
-
     
 };
 

@@ -224,13 +224,13 @@ def getH_fFromD(d):
     hvf = hv/(0.4*1835.6*1511.8)
     hvs = hv/(0.6*2600*900)
     height = 300/(np.pi*np.power(d/2,2))
-    print("height : " + str(height) + ", hvf : " + str(hvf) + ", hvs : "+str(hvs))
+    print("uf : " + str(uf) + ", height : " + str(height) + ", hvf : " + str(hvf) + ", hvs : "+str(hvs))
 
 
 
 if __name__ == "__main__":
 
-    nCells = 256
+    nCells = 128
 
     sol_fluid,sol_solid = importComputedSols()
 
@@ -247,7 +247,7 @@ if __name__ == "__main__":
     #plotvscos(sol,nCells,n)
 
     '''Plots the OVS results'''
-    #OVSNC(True)
+    #OVSNC(False)
 
     '''Plots the state trace of the simulation'''
     #readState()
