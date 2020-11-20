@@ -36,7 +36,7 @@ void Simulator::simulate(bool MMS,bool coupled){
         Lbc = 1;
         sol_fluid.clear();
         sol_solid.clear();
-        for(int nc = 0; nc < nCells-1; ++nc){
+        for(int nc = 0; nc < nCells; ++nc){
             sol_fluid.push_back(cos(this->k_fluid*nc*dx));
             sol_solid.push_back(cos(this->k_solid*nc*dx));
         }
@@ -131,10 +131,8 @@ void Simulator::simulate(bool MMS,bool coupled){
             */
             if ((ss_fluid == false) and (i%this->checkSteadyStateTimeStep)){
                 double err = 0;
-                for(int i = 0; i <nCells;++i){
-                    err += 1/dt * abs(sol_fluid[i]-oldsol_fluid[i]);
-                }
-                err = 1.0/nCells*err;
+                err = L1Error(sol_fluid, oldsol_fluid);
+                err = err/dt;
                 if(err < errThreshold){
                     std::cerr << "Steady state of fluid solution attained for threshold " << errThreshold << " after " << i << " timesteps." << std::endl;
                     ss_fluid = true;
@@ -143,10 +141,8 @@ void Simulator::simulate(bool MMS,bool coupled){
 
             if ((ss_solid == false) and (i%this->checkSteadyStateTimeStep)){
                 double err = 0;
-                for(int i = 0; i < nCells;++i){
-                    err += 1/dt * abs(sol_solid[i]-oldsol_solid[i]);
-                }
-                err = 1.0/nCells*err;
+                err = L1Error(sol_solid, oldsol_solid);
+                err = err/dt;
                 if(err < errThreshold){
                     std::cerr << "Steady state of solid solution attained for threshold " << errThreshold << " after " << i << " timesteps." << std::endl;
                     ss_solid = true;
@@ -236,10 +232,14 @@ void Simulator::solveDiff(const std::vector<double> &oldsol_solid,const  std::ve
 
         if(state == "charging" or state == "idlecd"){
             //solid
-            sol_solid.push_back(oldsol_solid[j] + (alphaS*dt/(dx*dx))*(oldsol_solid[j+1]-2*oldsol_solid[j]+ oldsol_solid[j-1]) + (dt)*source_solid);
+            if((j == 1)or(j == nCells-2)){
+            sol_solid.push_back(oldsol_solid[j] + (alphaS*dt/(dx*dx))*(oldsol_solid[j+1] - 2*oldsol_solid[j] + oldsol_solid[j-1]) + (dt)*source_solid);
+            }else{
+            sol_solid.push_back(oldsol_solid[j] + (alphaS*dt/(dx*dx))*(-(1./12.)*oldsol_solid[j+2] +(4./3.)*oldsol_solid[j+1] - (5./2.)*oldsol_solid[j] + (4./3.)*oldsol_solid[j-1]-(1./12.)*oldsol_solid[j-2]) + (dt)*source_solid);
+            }
 
             //fluid
-            sol_fluid.push_back(oldsol_fluid[j] - (sim_uf*dt/dx)*(oldsol_fluid[j]-oldsol_fluid[j-1]) + (alphaF*dt/(dx*dx))*(oldsol_fluid[j+1]-2*oldsol_fluid[j]+ oldsol_fluid[j-1])+(dt)*source_fluid);
+            sol_fluid.push_back(oldsol_fluid[j] - (sim_uf*dt/dx)*(oldsol_fluid[j]-oldsol_fluid[j-1]) + (alphaF*dt/(dx*dx))*(oldsol_fluid[j+1]-2*oldsol_fluid[j] + oldsol_fluid[j-1])+(dt)*source_fluid);
         }
         if(state == "discharging" or state == "idledc"){
             //solid
@@ -300,7 +300,6 @@ void Simulator::solveDiff(const std::vector<double> &oldsol_solid,const  std::ve
         
         double new_Tf = (sol_fluid[nCells-2] + hvf*dt*sol_solid[nCells-2])/(1+hvf*dt);
         double new_Ts = (sol_solid[nCells-2] + hvs*dt*sol_fluid[nCells-2]/(1+hvf*dt))/(1+hvs*dt-(hvs*hvf*dt*dt/(1+hvf*dt)));
-;
 
         //puts the coupled solution back in
         sol_solid[nCells-2] = new_Ts;
@@ -349,7 +348,6 @@ void Simulator::OVS(double Pe, int n, bool coupled){
     this->dt = 20;
     this -> n_fluid = n;
     this -> n_solid = n;
-    this->sim_uf = uf;
     if(coupled){
         this -> n_fluid = 2;
         this -> n_solid = 1;
@@ -367,13 +365,13 @@ void Simulator::OVS(double Pe, int n, bool coupled){
     std::vector<double> L1S;
     std::vector<double> LinfS;
 
-    int NCellsi = 8;
+    int NCellsi = 16;
 
     //puts the right boundary conditions for the MMS
     this->Lbc = 1;
+    this->sim_uf = uf;
 
-
-    for(int i = 0;i < 8; ++i){
+    for(int i = 0;i < 5; ++i){
 
         this->nCells = NCellsi*pow(2,i);
 
@@ -386,7 +384,7 @@ void Simulator::OVS(double Pe, int n, bool coupled){
         std::cout << "dx : " << dx << std::endl;
 
         //this->alphaF = 0.03 * dx *dx /dt;
-        this->uf = (alphaF*Pe)/(dx*nCells);
+        this->sim_uf = (alphaF*Pe)/(dx*nCells);
         //this->alphaS = 0.03 * dx *dx /dt;
 
 
@@ -399,7 +397,7 @@ void Simulator::OVS(double Pe, int n, bool coupled){
         std::vector<double> sols;
 
         //initial temperature
-        for(int nc = 0; nc < nCells-1; ++nc){
+        for(int nc = 0; nc < nCells; ++nc){
             solf.push_back(cos(this->k_fluid*nc*dx));
             sols.push_back(cos(this->k_solid*nc*dx));
             //solf.push_back(cos(this->k_fluid*nc*dx)+dist(generator));
@@ -436,10 +434,8 @@ void Simulator::OVS(double Pe, int n, bool coupled){
             //check if steady state is attained
             if (ss_fluid == false){
                 double err = 0;
-                for(int i = 0; i <nCells;++i){
-                    err += 1/dt * abs(solf[i]-oldsolf[i]);
-                }
-                err = 1.0/nCells*err;
+                err = L1Error(solf, oldsolf);
+                err = err/dt;
                 if(err < errThreshold){
                     std::cerr << "Steady state of fluid solution attained for threshold " << errThreshold << " after " << i << " timesteps." << std::endl;
                     ss_fluid = true;
@@ -449,10 +445,8 @@ void Simulator::OVS(double Pe, int n, bool coupled){
 
             if (ss_solid == false){
                 double err = 0;
-                for(int i = 0; i < nCells;++i){
-                    err += 1/dt * abs(sols[i]-oldsols[i]);
-                }
-                err = 1.0/nCells*err;
+                err = L1Error(sols, oldsols);
+                err = err/dt;
                 if(err < errThreshold){
                     std::cerr << "Steady state of solid solution attained for threshold " << errThreshold << " after " << i << " timesteps." << std::endl;
                     ss_solid = true;
@@ -508,6 +502,7 @@ double Simulator::L1Error(const std::vector<double> &numSol,const std::vector<do
     }
     else {
         std::cerr << "L1Error error : the dimensions of the data doesn't match. " << std::endl;
+        std::cerr << numSol.size() <<" " << analySol.size() << std::endl;
         return 0;
     }
 }

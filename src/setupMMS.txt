@@ -3,13 +3,13 @@ height:
 diameter:
 1
 nCells:
-256
+64
 T0:
 293
 nCycles:
 1
 nTimeStepsCycle:
-1000000
+3000000
 charging state duration (seconds int):
 1000000
 idle charging-discharging state duration (seconds int):
@@ -19,11 +19,11 @@ discharging state duration (seconds int):
 idle discharging-charging state duration (seconds int):
 0
 alphaF:
-1e-07
+1e-6
 alphaS:
 1e-6
 uf:
-0.00002
+0.0001
 hvs:
 0.0002
 hvf:

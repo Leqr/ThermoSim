@@ -115,7 +115,7 @@ def plotMovDouble(nCells,nTimeStep,sol):
     plt.legend()
     plt.show()
 
-def OVSNC(plotsolid,pathToBuild):
+def OVSNC(pathToBuild):
     #ovs = open("../Data/OVSNonCoupled3/ovsNCn=1,Pe=1.txt")
     ovs = open(pathToBuild+"ovs.txt")
 
@@ -129,67 +129,58 @@ def OVSNC(plotsolid,pathToBuild):
         ovsdata.append(af)
 
     fig, axs = plt.subplots(2, 2)
-    vals = [8,16,32,64,128,256,512,1024]
-    if plotsolid:
-        axs[0, 0].plot([np.log(1.0/n) for n in vals],[np.log(val) for val in ovsdata[2]],marker=".")
-        axs[0, 0].set_title('L1 norm for Ts, n = 4')
-        axs[0, 0].set_ylabel('Log(E)')
-        axs[0, 0].set_xlabel('Log(h)')
-        axs[0, 0].set_ylim([-8,10])
+    vals = [16,32,64,128,256]
+    axs[0, 0].plot([np.log(1.0/n) for n in vals],[np.log(val) for val in ovsdata[2]],marker=".",label = "L1 error")
+    axs[0, 0].set_title('Tsolid')
+    axs[0, 0].set_ylabel('Log(E)')
+    axs[0, 0].set_xlabel('Log(h)')
+    axs[0, 0].set_ylim([-8,10])
 
 
-        axs[0, 1].plot([np.log(1.0/n) for n in vals],[np.log(val) for val in ovsdata[3]],marker=".")
-        axs[0, 1].set_title('Linf norm for Ts, n = 4')
-        axs[0, 1].set_ylabel('Log(E)')
-        axs[0, 1].set_xlabel('Log(h)')
-        axs[0, 1].set_ylim([-8,10])
 
-        #y = [np.log(np.abs((ovsdata[2][i+1]-ovsdata[2][i])/(ovsdata[2][i]-ovsdata[2][i-1])))/np.log(1/2) for i in range(1,len(ovsdata[2])-1)]
-        y = [np.log(ovsdata[2][i]/ovsdata[2][i-1])/np.log(0.5) for i in range(1,len(ovsdata[2]))]
+    axs[0, 0].plot([np.log(1.0/n) for n in vals],[np.log(val) for val in ovsdata[3]],marker=".",label = "Linf error")
+    axs[0, 0].legend(loc="upper right")
+    #y = [np.log(np.abs((ovsdata[2][i+1]-ovsdata[2][i])/(ovsdata[2][i]-ovsdata[2][i-1])))/np.log(1/2) for i in range(1,len(ovsdata[2])-1)]
+    y = [np.log(ovsdata[2][i]/ovsdata[2][i-1])/np.log(0.5) for i in range(1,len(ovsdata[2]))]
 
-        axs[1, 0].plot([np.log(1.0/n) for n in vals[1:]],y ,marker=".")
-        axs[1, 0].set_ylabel('p')
-        axs[1, 0].set_xlabel('Log(h)')
-        axs[1, 0].set_ylim([0,4])
-
-        #y2 = [np.log(np.abs((ovsdata[3][i+1]-ovsdata[3][i])/(ovsdata[3][i]-ovsdata[3][i-1])))/np.log(1/2) for i in range(1,len(ovsdata[3])-1)]
-        y2 = [np.log(ovsdata[3][i]/ovsdata[3][i-1])/np.log(0.5) for i in range(1,len(ovsdata[3]))]
+    axs[1, 0].plot([np.log(1.0/n) for n in vals[1:]],y ,marker=".",label = "L1")
+    axs[1, 0].set_ylabel('p')
+    axs[1, 0].set_xlabel('Log(h)')
+    axs[1, 0].set_ylim([0,4])
 
 
-        axs[1, 1].plot([np.log(1.0/n) for n in vals[1:]],y2,marker=".")
-        axs[1, 1].set_ylabel('p')
-        axs[1, 1].set_xlabel('Log(h)')
-        axs[1, 1].set_ylim([0,4])
+
+    #y2 = [np.log(np.abs((ovsdata[3][i+1]-ovsdata[3][i])/(ovsdata[3][i]-ovsdata[3][i-1])))/np.log(1/2) for i in range(1,len(ovsdata[3])-1)]
+    y2 = [np.log(ovsdata[3][i]/ovsdata[3][i-1])/np.log(0.5) for i in range(1,len(ovsdata[3]))]
+
+    axs[1, 0].plot([np.log(1.0/n) for n in vals[1:]],y2,marker=".",label = "Linf")
+    axs[1, 0].legend(loc="upper right")
 
 
-    else:
+    axs[0, 1].plot([np.log(1.0/n) for n in vals],[np.log(val) for val in ovsdata[0]],marker=".",label = "L1 error")
+    axs[0, 1].set_title('Tfluid')
+    axs[0, 1].set_ylabel('Log(E)')
+    axs[0, 1].set_xlabel('Log(h)')
+    axs[0, 1].set_ylim([-8,10])
 
-        axs[0, 0].plot([np.log(1.0/n) for n in vals],[np.log(val) for val in ovsdata[0]],marker=".")
-        axs[0, 0].set_title('L1 norm for Tf, n = 1, Pe = 1')
-        axs[0, 0].set_ylabel('Log(E)')
-        axs[0, 0].set_xlabel('Log(h)')
-        axs[0, 0].set_ylim([-8,10])
 
-        axs[0, 1].plot([np.log(1.0/n) for n in vals],[np.log(val) for val in ovsdata[1]],marker=".")
-        axs[0, 1].set_title('Linf norm for Tf, n = 1, Pe = 1')
-        axs[0, 1].set_ylabel('Log(E)')
-        axs[0, 1].set_xlabel('Log(h)')
-        axs[0, 1].set_ylim([-8,10])
 
-        #y = [np.log(np.abs((ovsdata[0][i+1]-ovsdata[0][i])/(ovsdata[0][i]-ovsdata[0][i-1])))/np.log(1/2) for i in range(1,len(ovsdata[0])-1)]
-        y = [np.log(ovsdata[0][i]/ovsdata[0][i-1])/np.log(0.5) for i in range(1,len(ovsdata[0]))]
-        axs[1, 0].plot([np.log(1.0/n) for n in vals[1:]],y ,marker=".")
-        axs[1, 0].set_ylabel('p')
-        axs[1, 0].set_xlabel('Log(h)')
-        axs[1, 0].set_ylim([0,4])
+    axs[0, 1].plot([np.log(1.0/n) for n in vals],[np.log(val) for val in ovsdata[1]],marker=".",label = "Linf error")
+    axs[0, 1].legend(loc="upper right")
 
-        #y2 = [np.log(np.abs((ovsdata[1][i+1]-ovsdata[1][i])/(ovsdata[1][i]-ovsdata[1][i-1])))/np.log(1/2) for i in range(1,len(ovsdata[1])-1)]
-        y2 = [np.log(ovsdata[1][i]/ovsdata[1][i-1])/np.log(0.5) for i in range(1,len(ovsdata[1]))]
+    #y = [np.log(np.abs((ovsdata[0][i+1]-ovsdata[0][i])/(ovsdata[0][i]-ovsdata[0][i-1])))/np.log(1/2) for i in range(1,len(ovsdata[0])-1)]
+    y = [np.log(ovsdata[0][i]/ovsdata[0][i-1])/np.log(0.5) for i in range(1,len(ovsdata[0]))]
+    axs[1, 1].plot([np.log(1.0/n) for n in vals[1:]],y ,marker=".",label = "L1")
+    axs[1, 1].set_ylabel('p')
+    axs[1, 1].set_xlabel('Log(h)')
+    axs[1, 1].set_ylim([0,4])
 
-        axs[1, 1].plot([np.log(1.0/n) for n in vals[1:]],y2,marker=".")
-        axs[1, 1].set_ylabel('p')
-        axs[1, 1].set_xlabel('Log(h)')
-        axs[1, 1].set_ylim([0,4])
+
+    #y2 = [np.log(np.abs((ovsdata[1][i+1]-ovsdata[1][i])/(ovsdata[1][i]-ovsdata[1][i-1])))/np.log(1/2) for i in range(1,len(ovsdata[1])-1)]
+    y2 = [np.log(ovsdata[1][i]/ovsdata[1][i-1])/np.log(0.5) for i in range(1,len(ovsdata[1]))]
+
+    axs[1, 1].plot([np.log(1.0/n) for n in vals[1:]],y2,marker=".",label = "Linf")
+    axs[1, 1].legend(loc="upper right")
 
     plt.legend()
     plt.show()
@@ -248,7 +239,7 @@ if __name__ == "__main__":
 
     sol_fluid,sol_solid = importComputedSols(pathToBuild)
 
-    sol = sol_solid
+    sol = sol_fluid
 
     '''Plots a Movie with the two computed solutions'''
     #nCells = 128
@@ -258,14 +249,15 @@ if __name__ == "__main__":
     #plotMov(nCells,len(sol),sol)
 
     '''Plot the last computed solution against a cosine for MMS '''
-    #n = 1
+    #n = 4
+    #nCells = 64
     #plotvscos(sol,nCells,n)
 
     '''Plots the OVS results'''
-    #OVSNC(False,pathToBuild)
+    #OVSNC(pathToBuild)
 
     '''Plots the state trace of the simulation'''
-    #readState()
+    #readState(pathToBuild)
 
     '''Plots the analytical solution against the computed sol'''
     #x,real_sol_fluid,real_sol_solid = importRealSols(pathToSrc)
@@ -282,14 +274,14 @@ if __name__ == "__main__":
     if mode == 0 :
         '''Plot the last computed solution against a cosine for MMS '''
         n = 1
-        nCells = 256
+        nCells = 64
         plotvscos(sol,nCells,n)
     if mode == 1 :
         '''Plots the OVS results'''
-        OVSNC(True,pathToBuild)
+        OVSNC(pathToBuild)
     if mode == 2 :
         '''Plots the OVS results'''
-        OVSNC(True,pathToBuild)
+        OVSNC(pathToBuild)
     if mode == 3:
         '''Plots the analytical solution against the computed sol'''
         x,real_sol_fluid,real_sol_solid = importRealSols(pathToSrc)

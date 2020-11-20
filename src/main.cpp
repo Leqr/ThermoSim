@@ -17,7 +17,7 @@
 int main(int argc, char** argv){
     
     std::string pathToSrc("../../src/");
-    int mode = 4;
+    int mode = 1;
     
     //mdoe setup from executable call
     //mode = *argv[0];
