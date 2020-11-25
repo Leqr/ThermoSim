@@ -200,6 +200,8 @@ def plotvsreal(computed,real):
     plt.plot(x,real_sol_fluid, label = 'Analytic Tf')
     plt.plot(x,sol_solid[-1],label = 'Numerical Ts')
     plt.plot(x,real_sol_solid,label = 'Analytic Ts')
+    plt.ylabel('Celsius')
+    plt.xlabel('Length [m]')
 
     plt.title("Numerical solution against analytical solution.")
     plt.legend()
@@ -254,7 +256,7 @@ if __name__ == "__main__":
     #plotvscos(sol,nCells,n)
 
     '''Plots the OVS results'''
-    #OVSNC(pathToBuild)
+    OVSNC(pathToBuild)
 
     '''Plots the state trace of the simulation'''
     #readState(pathToBuild)

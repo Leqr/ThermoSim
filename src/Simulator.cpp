@@ -9,7 +9,6 @@
 #include <unordered_map>
 #include <iostream>
 #include <math.h>
-#include <random>
 #include <string>
 #include <fstream>
 
@@ -118,17 +117,6 @@ void Simulator::simulate(bool MMS,bool coupled){
         //check if steady state is attained
         if(MMS){
 
-            //normalize the solid solution
-            /*
-            double mean = 0;
-            for(int i = 0; i < nCells; ++i){
-                //calculate average of solid solution to normalize
-                mean += (1/double(nCells))*sol_solid[i];
-            }
-            for(int i = 0; i < nCells; ++i){
-                sol_solid[i] -= mean;
-            }
-            */
             if ((ss_fluid == false) and (i%this->checkSteadyStateTimeStep)){
                 double err = 0;
                 err = L1Error(sol_fluid, oldsol_fluid);
@@ -232,11 +220,7 @@ void Simulator::solveDiff(const std::vector<double> &oldsol_solid,const  std::ve
 
         if(state == "charging" or state == "idlecd"){
             //solid
-            if((j == 1)or(j == nCells-2)){
-            sol_solid.push_back(oldsol_solid[j] + (alphaS*dt/(dx*dx))*(oldsol_solid[j+1] - 2*oldsol_solid[j] + oldsol_solid[j-1]) + (dt)*source_solid);
-            }else{
-            sol_solid.push_back(oldsol_solid[j] + (alphaS*dt/(dx*dx))*(-(1./12.)*oldsol_solid[j+2] +(4./3.)*oldsol_solid[j+1] - (5./2.)*oldsol_solid[j] + (4./3.)*oldsol_solid[j-1]-(1./12.)*oldsol_solid[j-2]) + (dt)*source_solid);
-            }
+            sol_solid.push_back(oldsol_solid[j] + (alphaS*dt/(dx*dx))*(oldsol_solid[j+1] - 2*oldsol_solid[j] + oldsol_solid[j-1]) + (dt)*source_solid);                
 
             //fluid
             sol_fluid.push_back(oldsol_fluid[j] - (sim_uf*dt/dx)*(oldsol_fluid[j]-oldsol_fluid[j-1]) + (alphaF*dt/(dx*dx))*(oldsol_fluid[j+1]-2*oldsol_fluid[j] + oldsol_fluid[j-1])+(dt)*source_fluid);
@@ -345,9 +329,11 @@ void Simulator::checkStabCond(){
 
 
 void Simulator::OVS(double Pe, int n, bool coupled){
-    this->dt = 20;
+    this->dt = 5;
     this -> n_fluid = n;
     this -> n_solid = n;
+    k_fluid = 2*M_PI*n_fluid/this->height;
+    k_solid = 2*M_PI*n_solid/this->height;
     if(coupled){
         this -> n_fluid = 2;
         this -> n_solid = 1;
@@ -356,9 +342,6 @@ void Simulator::OVS(double Pe, int n, bool coupled){
     }else{
         std::cout << "Non coupled equations OVS with Pe = " << Pe << " and n = " << n <<  std::endl;
     }
-
-    //std::default_random_engine generator;
-    //std::uniform_real_distribution<double> dist(-0.1,0.1);
 
     std::vector<double> L1F;
     std::vector<double> LinfF;
@@ -384,7 +367,7 @@ void Simulator::OVS(double Pe, int n, bool coupled){
         std::cout << "dx : " << dx << std::endl;
 
         //this->alphaF = 0.03 * dx *dx /dt;
-        this->sim_uf = (alphaF*Pe)/(dx*nCells);
+        this->sim_uf = (alphaF*Pe)/(this->height);
         //this->alphaS = 0.03 * dx *dx /dt;
 
 
@@ -421,16 +404,7 @@ void Simulator::OVS(double Pe, int n, bool coupled){
 
             //get the n+1 solution, pass references to the solution to optimize the speed
             solveDiff(oldsols,oldsolf,sols,solf,true,coupled);
-            /*
-            double mean = 0;
-            for(int i = 0; i < nCells; ++i){
-                //calculate average of solid solution to normalize
-                mean += (1/double(nCells))*sols[i];
-            }
-            for(int i = 0; i < nCells; ++i){
-                sols[i] -= mean;
-            }
-            */
+            
             //check if steady state is attained
             if (ss_fluid == false){
                 double err = 0;
@@ -592,7 +566,7 @@ Simulator::Simulator(std::unordered_map<std::string, int> durations,
     Lbc = 873;
     Rbc = 293;
   
-    //setting up the maximum themral energy
+    //setting up the maximum thermal energy
     double prefactor = 0.4*1835.6*1511.8+(1-0.4)*2600*900;
     this->maximumThermalEnergy = prefactor*(M_PI/4)*pow(this->diameter,2)*this->height*(this->Lbc-this->Rbc);
     

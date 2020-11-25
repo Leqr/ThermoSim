@@ -9,7 +9,7 @@ T0:
 nCycles:
 1
 nTimeStepsCycle:
-1000000
+9000000
 charging state duration (seconds int):
 3000000
 idle charging-discharging state duration (seconds int):

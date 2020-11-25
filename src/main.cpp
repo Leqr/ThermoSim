@@ -17,10 +17,9 @@
 int main(int argc, char** argv){
     
     std::string pathToSrc("../../src/");
-    int mode = 1;
     
-    //mdoe setup from executable call
-    //mode = *argv[0];
+    //mode setup from executable call
+    int mode = *argv[0];
     
     //open the setup.txt file
     std::ifstream setup;
@@ -138,7 +137,7 @@ int main(int argc, char** argv){
             
         case 1:
             //non coupled OVS and plot
-            sim.OVS(1,1,false);
+            sim.OVS(1000,4,false);
             cmd = "python " + pathToSrc + "plotter.py 1";
             system(cmd.c_str());
 
@@ -146,7 +145,7 @@ int main(int argc, char** argv){
             
         case 2:
             //coupled OVS and plot
-            sim.OVS(1,0,true);
+            sim.OVS(1000,1,true);
             cmd = "python " + pathToSrc + "plotter.py 2";
             system(cmd.c_str());
             break;
