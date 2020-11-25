@@ -551,7 +551,7 @@ Simulator::Simulator(std::unordered_map<std::string, int> durations,
                      double uf,
                      double hvs,
                      double hvf):durations(durations),height(height),diameter(diameter),
-                    nCells(nCells),T0(T0),nCycles(nCycles),exporter(exporter),nTimeStepsCycle(nTimeStepsCycle),alphaF(alphaF),alphaS(alphaS),uf(uf),state("charging"),hvs(hvs),hvf(hvf)
+                    nCells(nCells),T0(T0),nCycles(nCycles),state("charging"),exporter(exporter),nTimeStepsCycle(nTimeStepsCycle),alphaF(alphaF),alphaS(alphaS),uf(uf),hvf(hvf),hvs(hvs)
 {
 
     //seting up some constants

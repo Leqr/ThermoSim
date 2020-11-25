@@ -231,12 +231,12 @@ if __name__ == "__main__":
     try :
         mode = int(sys.argv[1])
         pathToBuild = ""
-        pathToSrc = "../../src/"
+        pathToSrc = "../src/"
 
     except :
         # no argument passed, means manual run of the script for debugging
         mode = -1
-        pathToBuild = "../build/Debug/"
+        pathToBuild = "../build"
         pathToSrc = ""
 
     sol_fluid,sol_solid = importComputedSols(pathToBuild)

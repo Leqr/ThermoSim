@@ -16,7 +16,7 @@
 
 int main(int argc, char** argv){
     
-    std::string pathToSrc("../../src/");
+    std::string pathToSrc("../src/");
     
     //mode setup from executable call
     int mode = *argv[0];
