@@ -130,7 +130,7 @@ int main(int argc, char** argv){
     switch(mode){
         case 0:
             //solve the uncoupled equation with MMS source term and plot it
-            std::cout << "MMS plotting against manufactured solution." << std::endl;
+            std::cout << "Numerical solution plotting against manufactured solution." << std::endl;
             sim.simulate(true,false);
             cmd = "python " + pathToSrc + "plotter.py 0";
             system(cmd.c_str());
