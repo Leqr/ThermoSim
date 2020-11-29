@@ -163,6 +163,7 @@ int main(int argc, char** argv){
         case 4:
             //solve the coupled equation for design study and plots the result + show the exergy and capacity in the terminal
             std::cout << "Design Study" << std::endl;
+            std::cout << "Diameter : " << diameter << std::endl;
             sim.simulate(false,true);
             cmd = "python " + pathToSrc + "plotter.py 4";
             system(cmd.c_str());
