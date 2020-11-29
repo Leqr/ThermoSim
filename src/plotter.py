@@ -1,3 +1,10 @@
+#
+#  Plotter.py
+#  CFDSim
+#
+#  Created by Léonard Equer on 02.10.20.
+#
+
 import matplotlib.pyplot as plt
 from matplotlib import animation
 import numpy as np
@@ -6,6 +13,7 @@ import sys
 import os
 
 def importRealSols(pathToSrc):
+    #loads the analytical solution
     s = open(pathToSrc+"sol-exact-5.00000E+03.dat")
 
     x = []
@@ -55,6 +63,7 @@ def importComputedSols(pathToBuild):
 
 
 def readState(pathToBuild):
+    #read the state trace of the program
     s = open(pathToBuild+"stateCFD.txt")
 
     statedata = s.readlines()
@@ -64,8 +73,7 @@ def readState(pathToBuild):
 
 
 def plotMov(nCells,nTimeStep,sol):
-    #animation of the solution
-
+    #animation of one solution
     fig = plt.figure()
     ax = plt.axes(xlim=(0, nCells-1),ylim = (200,1000))
     line, = ax.plot([], [], lw=2)
@@ -87,7 +95,7 @@ def plotMov(nCells,nTimeStep,sol):
     plt.show()
 
 def plotMovDouble(nCells,nTimeStep,sol):
-    #animation of the solution
+    #animation of the solution with both fluid and solid
     sol_fluid = sol[0]
     sol_solid = sol[1]
 
@@ -116,11 +124,9 @@ def plotMovDouble(nCells,nTimeStep,sol):
     plt.show()
 
 def OVSNC(pathToBuild):
-    #ovs = open("../Data/OVSNonCoupled3/ovsNCn=1,Pe=1.txt")
+    #plot the ovs results
     ovs = open(pathToBuild+"ovs.txt")
-
     ovsdata = []
-
     for line in ovs:
         a = line.strip().split(',')
         af = []
@@ -128,31 +134,24 @@ def OVSNC(pathToBuild):
             af.append(float(val))
         ovsdata.append(af)
 
+    #generate the plots
     fig, axs = plt.subplots(2, 2)
     vals = [16,32,64,128,256]
+
     axs[0, 0].plot([np.log(1.0/n) for n in vals],[np.log(val) for val in ovsdata[2]],marker=".",label = "L1 error")
     axs[0, 0].set_title('Tsolid')
     axs[0, 0].set_ylabel('Log(E)')
     axs[0, 0].set_xlabel('Log(h)')
     axs[0, 0].set_ylim([-8,10])
-
-
-
     axs[0, 0].plot([np.log(1.0/n) for n in vals],[np.log(val) for val in ovsdata[3]],marker=".",label = "Linf error")
     axs[0, 0].legend(loc="upper right")
-    #y = [np.log(np.abs((ovsdata[2][i+1]-ovsdata[2][i])/(ovsdata[2][i]-ovsdata[2][i-1])))/np.log(1/2) for i in range(1,len(ovsdata[2])-1)]
-    y = [np.log(ovsdata[2][i]/ovsdata[2][i-1])/np.log(0.5) for i in range(1,len(ovsdata[2]))]
 
+    y = [np.log(ovsdata[2][i]/ovsdata[2][i-1])/np.log(0.5) for i in range(1,len(ovsdata[2]))]
     axs[1, 0].plot([np.log(1.0/n) for n in vals[1:]],y ,marker=".",label = "L1")
     axs[1, 0].set_ylabel('p')
     axs[1, 0].set_xlabel('Log(h)')
     axs[1, 0].set_ylim([0,4])
-
-
-
-    #y2 = [np.log(np.abs((ovsdata[3][i+1]-ovsdata[3][i])/(ovsdata[3][i]-ovsdata[3][i-1])))/np.log(1/2) for i in range(1,len(ovsdata[3])-1)]
     y2 = [np.log(ovsdata[3][i]/ovsdata[3][i-1])/np.log(0.5) for i in range(1,len(ovsdata[3]))]
-
     axs[1, 0].plot([np.log(1.0/n) for n in vals[1:]],y2,marker=".",label = "Linf")
     axs[1, 0].legend(loc="upper right")
 
@@ -162,23 +161,15 @@ def OVSNC(pathToBuild):
     axs[0, 1].set_ylabel('Log(E)')
     axs[0, 1].set_xlabel('Log(h)')
     axs[0, 1].set_ylim([-8,10])
-
-
-
     axs[0, 1].plot([np.log(1.0/n) for n in vals],[np.log(val) for val in ovsdata[1]],marker=".",label = "Linf error")
     axs[0, 1].legend(loc="upper right")
 
-    #y = [np.log(np.abs((ovsdata[0][i+1]-ovsdata[0][i])/(ovsdata[0][i]-ovsdata[0][i-1])))/np.log(1/2) for i in range(1,len(ovsdata[0])-1)]
     y = [np.log(ovsdata[0][i]/ovsdata[0][i-1])/np.log(0.5) for i in range(1,len(ovsdata[0]))]
     axs[1, 1].plot([np.log(1.0/n) for n in vals[1:]],y ,marker=".",label = "L1")
     axs[1, 1].set_ylabel('p')
     axs[1, 1].set_xlabel('Log(h)')
     axs[1, 1].set_ylim([0,4])
-
-
-    #y2 = [np.log(np.abs((ovsdata[1][i+1]-ovsdata[1][i])/(ovsdata[1][i]-ovsdata[1][i-1])))/np.log(1/2) for i in range(1,len(ovsdata[1])-1)]
     y2 = [np.log(ovsdata[1][i]/ovsdata[1][i-1])/np.log(0.5) for i in range(1,len(ovsdata[1]))]
-
     axs[1, 1].plot([np.log(1.0/n) for n in vals[1:]],y2,marker=".",label = "Linf")
     axs[1, 1].legend(loc="upper right")
 
@@ -186,6 +177,7 @@ def OVSNC(pathToBuild):
     plt.show()
 
 def plotvscos(sol,ncells,n):
+    #plot against the MMS cosine
     plt.plot(sol[-1],label = "numerical solution")
     plt.plot([np.cos(2*3.14*n/10*x) for x in np.linspace(0,10,ncells)],label = "real cos")
     plt.suptitle("Ts,nC=256,n=1")
@@ -193,6 +185,7 @@ def plotvscos(sol,ncells,n):
     plt.show()
 
 def plotvsreal(computed,real):
+    #plot against the analytical solution
     sol_fluid,sol_solid = computed
     x,real_sol_fluid,real_sol_solid = real
 
@@ -208,6 +201,7 @@ def plotvsreal(computed,real):
     plt.show()
 
 def getH_fFromD(d):
+    #parameters calculation for each d for design study
     uf = 10/(np.pi*1835*np.power(d/2,2)*0.4)
     Re = 0.4*1835.6*uf*0.03/2.63
     Pr = 2.63*1511/0.52
@@ -236,13 +230,14 @@ if __name__ == "__main__":
     except :
         # no argument passed, means manual run of the script for debugging
         mode = -1
-        pathToBuild = "../build"
+        pathToBuild = "../build/"
         pathToSrc = ""
 
     sol_fluid,sol_solid = importComputedSols(pathToBuild)
 
     sol = sol_fluid
 
+    #used for debugging and running directly python plotter.py without argv
     '''Plots a Movie with the two computed solutions'''
     #nCells = 128
     #plotMovDouble(nCells,len(sol_solid),[sol_fluid,sol_solid])
@@ -256,7 +251,7 @@ if __name__ == "__main__":
     #plotvscos(sol,nCells,n)
 
     '''Plots the OVS results'''
-    OVSNC(pathToBuild)
+    #OVSNC(pathToBuild)
 
     '''Plots the state trace of the simulation'''
     #readState(pathToBuild)

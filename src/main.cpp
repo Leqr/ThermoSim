@@ -12,22 +12,22 @@
 #include <unordered_map>
 #include <string>
 #include <fstream>
-#include<stdlib.h>
+#include <stdlib.h>
 
 int main(int argc, char** argv){
-    
-    std::string pathToSrc("../src");
-    
+
+    std::string pathToSrc("../src/");
+
     //mode setup from executable call
-    int mode = *argv[0];
-    
+    int mode = std::stoi(argv[1]);
+
     //open the setup.txt file
     std::ifstream setup;
-    
+
     switch(mode){
         case 0:
             //setup file for MMS
-            setup.open(pathToSrc + "setupMMS.txt");
+            setup.open("../src/setupMMS.txt");
             break;
         case 1:
             //setup file for non coupled OVS
@@ -47,12 +47,12 @@ int main(int argc, char** argv){
             break;
     }
 
-    
-    if( !setup.is_open()) {
-       std::cerr << "Error: setup file could not be opened" << std::endl;
-       exit(1);
+
+    if(!setup.is_open()) {
+      std::cerr << "Error: setup file could not be opened" << std::endl;
+      exit(1);
     }
-    
+
     //parameters for the simulation
     double height;
     double diameter;
@@ -66,7 +66,7 @@ int main(int argc, char** argv){
     double uf;
     double hvs;
     double hvf;
-    
+
     //read the parameters
     std::string line;
     int k = 1;
@@ -130,21 +130,23 @@ int main(int argc, char** argv){
     switch(mode){
         case 0:
             //solve the uncoupled equation with MMS source term and plot it
+            std::cout << "MMS plotting against manufactured solution." << std::endl;
             sim.simulate(true,false);
             cmd = "python " + pathToSrc + "plotter.py 0";
-             system(cmd.c_str());
+            system(cmd.c_str());
             break;
-            
+
         case 1:
             //non coupled OVS and plot
-            sim.OVS(1000,4,false);
+            std::cout << "OVS Non Coupled." << std::endl;
+            sim.OVS(1000,1,false);
             cmd = "python " + pathToSrc + "plotter.py 1";
             system(cmd.c_str());
-
             break;
-            
+
         case 2:
             //coupled OVS and plot
+            std::cout << "OVS Coupled." << std::endl;
             sim.OVS(1000,1,true);
             cmd = "python " + pathToSrc + "plotter.py 2";
             system(cmd.c_str());
@@ -152,18 +154,20 @@ int main(int argc, char** argv){
 
         case 3:
             //solve the coupled equation for part 5 and plots the result
+            std::cout << "Analytic vs numeric." << std::endl;
             sim.simulate(false,true);
             cmd = "python " + pathToSrc + "plotter.py 3";
             system(cmd.c_str());
             break;
-            
+
         case 4:
             //solve the coupled equation for design study and plots the result + show the exergy and capacity in the terminal
+            std::cout << "Design Study" << std::endl;
             sim.simulate(false,true);
             cmd = "python " + pathToSrc + "plotter.py 4";
             system(cmd.c_str());
             break;
-        
+
     }
     return 0;
 }

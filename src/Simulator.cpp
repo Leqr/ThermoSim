@@ -26,7 +26,7 @@ void Simulator::simulate(bool MMS,bool coupled){
 
 
     sim_uf = this->uf;
-    
+
     //bool of ss attained, when both true the program stops
     bool ss_fluid = false;
     bool ss_solid = false;
@@ -76,31 +76,31 @@ void Simulator::simulate(bool MMS,bool coupled){
         if (val == nTimeStepsCycle*(durations["discharging"]+durations["idlecd"]+durations["charging"])/total_time_cycle){
             this->state = "idledc";
             sim_uf = 0;
-            
+
             if(!MMS){
                 //capacity factors
                 double capa = (ThermalEnergyBefDischar-ThermalEnergyBefChar)/maximumThermalEnergy;
                 capacityFactors.push_back(capa);
                 std::cout << "Capacity factor for this cycle : ";
                 std::cout << capa << std::endl;
-                
+
                 //exergy efficiencies
                 double exEff = (fluxdout-fluxdin)/(fluxcin-fluxcout);
                 exergyEfficiencies.push_back(exEff);
-                std::cout << "Exergy efficiency for this cycle : " << exEff << std::endl;
+                std::cout << "Exergy efficiency for this cycle : " << std::abs(exEff) << std::endl;
                 fluxdout = 0;
                 fluxcin = 0;
                 fluxdin = 0;
                 fluxcout = 0;
-                
+
             }
-            
+
         }
         if (val == 0){
             this->state = "charging";
             sim_uf = this->uf;
             ThermalEnergyBefChar = computeStoredThermalEnergy(sol_solid, sol_fluid);
-        
+
         }
 
         exporter.exportState(state);
@@ -113,7 +113,7 @@ void Simulator::simulate(bool MMS,bool coupled){
 
         //get the n+1 solution, pass references to the solution to optimize the speed
         solveDiff(oldsol_solid,oldsol_fluid,sol_solid,sol_fluid,MMS,coupled);
-        
+
         //check if steady state is attained
         if(MMS){
 
@@ -162,7 +162,7 @@ void Simulator::simulate(bool MMS,bool coupled){
 
         std::cout <<"L1 error solid: " << L1Error(sol_solid,analyticSolSolid) << std::endl;
         std::cout << "Linf error solid: " << LinfError(sol_solid,analyticSolSolid) << std::endl;
-    }    
+    }
 
 }
 
@@ -220,7 +220,7 @@ void Simulator::solveDiff(const std::vector<double> &oldsol_solid,const  std::ve
 
         if(state == "charging" or state == "idlecd"){
             //solid
-            sol_solid.push_back(oldsol_solid[j] + (alphaS*dt/(dx*dx))*(oldsol_solid[j+1] - 2*oldsol_solid[j] + oldsol_solid[j-1]) + (dt)*source_solid);                
+            sol_solid.push_back(oldsol_solid[j] + (alphaS*dt/(dx*dx))*(oldsol_solid[j+1] - 2*oldsol_solid[j] + oldsol_solid[j-1]) + (dt)*source_solid);
 
             //fluid
             sol_fluid.push_back(oldsol_fluid[j] - (sim_uf*dt/dx)*(oldsol_fluid[j]-oldsol_fluid[j-1]) + (alphaF*dt/(dx*dx))*(oldsol_fluid[j+1]-2*oldsol_fluid[j] + oldsol_fluid[j-1])+(dt)*source_fluid);
@@ -236,7 +236,7 @@ void Simulator::solveDiff(const std::vector<double> &oldsol_solid,const  std::ve
 
         if(coupled){
             //solve the coupled equation one step behind to optimize memory
-            
+
             double new_Tf = (sol_fluid[j-1] + hvf*dt*sol_solid[j-1])/(1+hvf*dt);
             double new_Ts = (sol_solid[j-1] + hvs*dt*sol_fluid[j-1]/(1+hvf*dt))/(1+hvs*dt-(hvs*hvf*dt*dt/(1+hvf*dt)));
 
@@ -281,14 +281,14 @@ void Simulator::solveDiff(const std::vector<double> &oldsol_solid,const  std::ve
 
     if(coupled){
         //solve the coupled equation one step behind to optimize memory
-        
+
         double new_Tf = (sol_fluid[nCells-2] + hvf*dt*sol_solid[nCells-2])/(1+hvf*dt);
         double new_Ts = (sol_solid[nCells-2] + hvs*dt*sol_fluid[nCells-2]/(1+hvf*dt))/(1+hvs*dt-(hvs*hvf*dt*dt/(1+hvf*dt)));
 
         //puts the coupled solution back in
         sol_solid[nCells-2] = new_Ts;
         sol_fluid[nCells-2] = new_Tf;
-        
+
         new_Tf = (sol_fluid[nCells-1] + hvf*dt*sol_solid[nCells-1])/(1+hvf*dt);
         new_Ts = (sol_solid[nCells-1] + hvs*dt*sol_fluid[nCells-1]/(1+hvf*dt))/(1+hvs*dt-(hvs*hvf*dt*dt/(1+hvf*dt)));
 
@@ -300,7 +300,7 @@ void Simulator::solveDiff(const std::vector<double> &oldsol_solid,const  std::ve
 }
 
 void Simulator::checkStabCond(){
-    
+
     std::cout << std::endl;
     std::cout  << "CFL and diffusion numbers : " << std::endl;
     //check stability conditions
@@ -337,7 +337,7 @@ void Simulator::OVS(double Pe, int n, bool coupled){
     if(coupled){
         this -> n_fluid = 2;
         this -> n_solid = 1;
-        
+
         std::cout << "Coupled equations OVS with Pe = " << Pe << std::endl;
     }else{
         std::cout << "Non coupled equations OVS with Pe = " << Pe << " and n = " << n <<  std::endl;
@@ -404,7 +404,7 @@ void Simulator::OVS(double Pe, int n, bool coupled){
 
             //get the n+1 solution, pass references to the solution to optimize the speed
             solveDiff(oldsols,oldsolf,sols,solf,true,coupled);
-            
+
             //check if steady state is attained
             if (ss_fluid == false){
                 double err = 0;
@@ -502,7 +502,7 @@ double Simulator::LinfError(const std::vector<double> &numSol,const std::vector<
 
 double Simulator::computeStoredThermalEnergy(std::vector<double> &sols, std::vector<double> &solf){
     //trapezoidal formula
-    
+
     double integral_fluid = 0;
     double integral_solid = 0;
 
@@ -510,7 +510,7 @@ double Simulator::computeStoredThermalEnergy(std::vector<double> &sols, std::vec
         integral_fluid += (((i+1)*dx-i*dx)/2)*(solf[i+1]+solf[i]);
         integral_solid += (((i+1)*dx-i*dx)/2)*(sols[i+1]+sols[i]);
     }
-    
+
     double Qt =(M_PI/4)*pow(diameter,2)*(0.4*1835.6*1511.8*integral_fluid+(1-0.4)*2600*900*integral_solid);
     return Qt;
 }
@@ -533,7 +533,7 @@ void Simulator::computeNextExergyFlux(std::vector<double> &oldsolf,std::vector<d
     }else if (state == "charging"){
         fluxcout += prefactor*dt*0.5*((T-T0-T0*std::log(T/T0))+(oldT-T0-T0*std::log(oldT/T0)));
     }
-    
+
 }
 
 
@@ -562,14 +562,14 @@ Simulator::Simulator(std::unordered_map<std::string, int> durations,
     std::cout << "dx : " << dx << std::endl;
     k_fluid = 2*M_PI*n_fluid/this->height;
     k_solid = 2*M_PI*n_solid/this->height;
-    
+
     Lbc = 873;
     Rbc = 293;
-  
+
     //setting up the maximum thermal energy
     double prefactor = 0.4*1835.6*1511.8+(1-0.4)*2600*900;
     this->maximumThermalEnergy = prefactor*(M_PI/4)*pow(this->diameter,2)*this->height*(this->Lbc-this->Rbc);
-    
+
 
 
 }

@@ -16,28 +16,22 @@
 
 class Exporter {
     private:
-    
+
     std::ofstream outdatastate;
     std::ofstream fluidtempdata;
     std::ofstream solidtempdata;
     std::ofstream ovsdata;
     std::string pathToSrc;
 
-    
     public:
-    
-    
+
     void pushFluid(const std::vector<double> &fluidtemp);
     void pushSolid(const std::vector<double> &solidtemp);
     void pushOVS(const std::vector<double> &l);
     void exportState(std::string state);
     Exporter(std::string pathToSrc);
     ~Exporter();
-    
-    
-    /******************** Deprecated *****************
-    void fexport(std::vector<std::vector<double>> fluidtemp,std::vector<std::vector<double>> solidtemp);
-     */
+
 };
 
 #endif /* Exporter_hpp */

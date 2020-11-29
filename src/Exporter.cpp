@@ -55,19 +55,19 @@ Exporter::Exporter(std::string pathToSrc):pathToSrc(pathToSrc)
        std::cerr << "Error: file could not be opened" << std::endl;
        exit(1);
     }
-    
+
     fluidtempdata.open("fluid.txt");
     if( !fluidtempdata.is_open()) {
        std::cerr << "Error: file could not be opened" << std::endl;
        exit(1);
     }
-    
+
     solidtempdata.open("solid.txt");
     if( !solidtempdata.is_open()) {
        std::cerr << "Error: file could not be opened" << std::endl;
        exit(1);
     }
-    
+
     ovsdata.open("ovs.txt");
     if( !ovsdata.is_open()) {
        std::cerr << "Error: file could not be opened" << std::endl;
@@ -77,45 +77,10 @@ Exporter::Exporter(std::string pathToSrc):pathToSrc(pathToSrc)
 
 Exporter::~Exporter()
 {
-    
+
     outdatastate.close();
     fluidtempdata.close();
     solidtempdata.close();
     ovsdata.close();
-    
+
 }
-
-/*
- ******************************************************************************
- Deprecated, for reference
- *******************************************************************************
-*/
-
-/*
-void Exporter::fexport(std::vector<std::vector<double>> fluidtemp,std::vector<std::vector<double>> solidtemp){
-    
-    outdata << "fluidtemp" << std::endl;
-
-    for(int i=0; i < int(fluidtemp.size()); i++){
-        for(int j=0; j < int(fluidtemp[i].size()); j++){
-            outdata << fluidtemp[i][j];
-            if(j != int(fluidtemp[i].size())-1){
-                outdata << ",";
-            }
-        }
-        outdata << std::endl;
-    }
-    
-    outdata << "solidtemp" << std::endl;
-    for(int i=0; i < int(solidtemp.size()); i++){
-        for(int j=0; j < int(solidtemp[i].size()); j++){
-            outdata << fluidtemp[i][j];
-            if(j != int(solidtemp[i].size())-1){
-                outdata << ",";
-            }
-        }
-        outdata << std::endl;
-    }
-}
-*/
-
