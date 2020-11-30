@@ -32,7 +32,7 @@ void Simulator::simulate(bool MMS,bool coupled){
     bool ss_solid = false;
 
     if(MMS){
-        Lbc = 1;
+        Lbc = 1.0;
         sol_fluid.clear();
         sol_solid.clear();
         for(int nc = 0; nc < nCells; ++nc){
@@ -62,7 +62,7 @@ void Simulator::simulate(bool MMS,bool coupled){
         //updating the state of the simulation
         if (val == nTimeStepsCycle*durations["charging"]/total_time_cycle){
             this->state = "idlecd";
-            sim_uf = 0;
+            sim_uf = 0.0;
             if(!MMS){
                 std::cout << "Temperature difference between beginning and end of charging : " << oldsol_fluid.back()-T0 << std::endl;
             }
@@ -75,7 +75,7 @@ void Simulator::simulate(bool MMS,bool coupled){
         }
         if (val == nTimeStepsCycle*(durations["discharging"]+durations["idlecd"]+durations["charging"])/total_time_cycle){
             this->state = "idledc";
-            sim_uf = 0;
+            sim_uf = 0.0;
 
             if(!MMS){
                 //capacity factors
@@ -88,10 +88,10 @@ void Simulator::simulate(bool MMS,bool coupled){
                 double exEff = (fluxdout-fluxdin)/(fluxcin-fluxcout);
                 exergyEfficiencies.push_back(exEff);
                 std::cout << "Exergy efficiency for this cycle : " << std::abs(exEff) << std::endl;
-                fluxdout = 0;
-                fluxcin = 0;
-                fluxdin = 0;
-                fluxcout = 0;
+                fluxdout = 0.0;
+                fluxcin = 0.0;
+                fluxdin = 0.0;
+                fluxcout = 0.0;
 
             }
 
@@ -118,7 +118,7 @@ void Simulator::simulate(bool MMS,bool coupled){
         if(MMS){
 
             if ((ss_fluid == false) and (i%this->checkSteadyStateTimeStep)){
-                double err = 0;
+                double err = 0.0;
                 err = L1Error(sol_fluid, oldsol_fluid);
                 err = err/dt;
                 if(err < errThreshold){
@@ -128,7 +128,7 @@ void Simulator::simulate(bool MMS,bool coupled){
             }
 
             if ((ss_solid == false) and (i%this->checkSteadyStateTimeStep)){
-                double err = 0;
+                double err = 0.0;
                 err = L1Error(sol_solid, oldsol_solid);
                 err = err/dt;
                 if(err < errThreshold){
@@ -168,8 +168,8 @@ void Simulator::simulate(bool MMS,bool coupled){
 
 void Simulator::solveDiff(const std::vector<double> &oldsol_solid,const  std::vector<double> &oldsol_fluid, std::vector<double> &sol_solid, std::vector<double> &sol_fluid,bool MMS,bool coupled){
     //Method of Manufactured solutions
-    double source_solid = 0;
-    double source_fluid = 0;
+    double source_solid = 0.0;
+    double source_fluid = 0.0;
     //puts the right boundary conditions for the MMS
     if(MMS){
         /*
@@ -220,25 +220,25 @@ void Simulator::solveDiff(const std::vector<double> &oldsol_solid,const  std::ve
 
         if(state == "charging" or state == "idlecd"){
             //solid
-            sol_solid.push_back(oldsol_solid[j] + (alphaS*dt/(dx*dx))*(oldsol_solid[j+1] - 2*oldsol_solid[j] + oldsol_solid[j-1]) + (dt)*source_solid);
+            sol_solid.push_back(oldsol_solid[j] + (alphaS*dt/(dx*dx))*(oldsol_solid[j+1] - 2.0*oldsol_solid[j] + oldsol_solid[j-1]) + (dt)*source_solid);
 
             //fluid
-            sol_fluid.push_back(oldsol_fluid[j] - (sim_uf*dt/dx)*(oldsol_fluid[j]-oldsol_fluid[j-1]) + (alphaF*dt/(dx*dx))*(oldsol_fluid[j+1]-2*oldsol_fluid[j] + oldsol_fluid[j-1])+(dt)*source_fluid);
+            sol_fluid.push_back(oldsol_fluid[j] - (sim_uf*dt/dx)*(oldsol_fluid[j]-oldsol_fluid[j-1]) + (alphaF*dt/(dx*dx))*(oldsol_fluid[j+1]-2.0*oldsol_fluid[j] + oldsol_fluid[j-1])+(dt)*source_fluid);
         }
         if(state == "discharging" or state == "idledc"){
             //solid
-            sol_solid.push_back(oldsol_solid[j] + (alphaS*dt/(dx*dx))*(oldsol_solid[j+1]-2*oldsol_solid[j]+ oldsol_solid[j-1]) + (dt)*source_solid);
+            sol_solid.push_back(oldsol_solid[j] + (alphaS*dt/(dx*dx))*(oldsol_solid[j+1]-2.0*oldsol_solid[j]+ oldsol_solid[j-1]) + (dt)*source_solid);
 
             //fluid
-            sol_fluid.push_back(oldsol_fluid[j] - (sim_uf*dt/dx)*(oldsol_fluid[j+1]-oldsol_fluid[j]) + (alphaF*dt/(dx*dx))*(oldsol_fluid[j+1]-2*oldsol_fluid[j]+ oldsol_fluid[j-1])+(dt)*source_fluid);
+            sol_fluid.push_back(oldsol_fluid[j] - (sim_uf*dt/dx)*(oldsol_fluid[j+1]-oldsol_fluid[j]) + (alphaF*dt/(dx*dx))*(oldsol_fluid[j+1]-2.0*oldsol_fluid[j]+ oldsol_fluid[j-1])+(dt)*source_fluid);
         }
 
 
         if(coupled){
             //solve the coupled equation one step behind to optimize memory
 
-            double new_Tf = (sol_fluid[j-1] + hvf*dt*sol_solid[j-1])/(1+hvf*dt);
-            double new_Ts = (sol_solid[j-1] + hvs*dt*sol_fluid[j-1]/(1+hvf*dt))/(1+hvs*dt-(hvs*hvf*dt*dt/(1+hvf*dt)));
+            double new_Tf = (sol_fluid[j-1] + hvf*dt*sol_solid[j-1])/(1.0+hvf*dt);
+            double new_Ts = (sol_solid[j-1] + hvs*dt*sol_fluid[j-1]/(1.0+hvf*dt))/(1.0+hvs*dt-(hvs*hvf*dt*dt/(1.0+hvf*dt)));
 
 
             //puts the coupled solution back in
@@ -282,15 +282,15 @@ void Simulator::solveDiff(const std::vector<double> &oldsol_solid,const  std::ve
     if(coupled){
         //solve the coupled equation one step behind to optimize memory
 
-        double new_Tf = (sol_fluid[nCells-2] + hvf*dt*sol_solid[nCells-2])/(1+hvf*dt);
-        double new_Ts = (sol_solid[nCells-2] + hvs*dt*sol_fluid[nCells-2]/(1+hvf*dt))/(1+hvs*dt-(hvs*hvf*dt*dt/(1+hvf*dt)));
+        double new_Tf = (sol_fluid[nCells-2] + hvf*dt*sol_solid[nCells-2])/(1.0+hvf*dt);
+        double new_Ts = (sol_solid[nCells-2] + hvs*dt*sol_fluid[nCells-2]/(1.0+hvf*dt))/(1.0+hvs*dt-(hvs*hvf*dt*dt/(1.0+hvf*dt)));
 
         //puts the coupled solution back in
         sol_solid[nCells-2] = new_Ts;
         sol_fluid[nCells-2] = new_Tf;
 
-        new_Tf = (sol_fluid[nCells-1] + hvf*dt*sol_solid[nCells-1])/(1+hvf*dt);
-        new_Ts = (sol_solid[nCells-1] + hvs*dt*sol_fluid[nCells-1]/(1+hvf*dt))/(1+hvs*dt-(hvs*hvf*dt*dt/(1+hvf*dt)));
+        new_Tf = (sol_fluid[nCells-1] + hvf*dt*sol_solid[nCells-1])/(1.0+hvf*dt);
+        new_Ts = (sol_solid[nCells-1] + hvs*dt*sol_fluid[nCells-1]/(1.0+hvf*dt))/(1.0+hvs*dt-(hvs*hvf*dt*dt/(1.0+hvf*dt)));
 
         sol_solid[nCells-1] = new_Ts;
         sol_fluid[nCells-1] = new_Tf;
@@ -312,15 +312,15 @@ void Simulator::checkStabCond(){
     std::cout << "sigma : " << sigma << std::endl;
     std::cout << std::endl;
 
-    if (2*ds > 1){
+    if (2.0*ds > 1.0){
         std::cerr << "ds is too big, the method might not be stable"  << std::endl;
     }
 
-    if(sigma*sigma > sigma + 2*df){
+    if(sigma*sigma > sigma + 2.0*df){
         std::cerr << "The method might not be stable (lower bound)"  << std::endl;
     }
 
-    if(sigma + 2*df > 1){
+    if(sigma + 2.0*df > 1.0){
         std::cerr << "The method might not be stable (upper bound)"  << std::endl;
     }
     std::cout << std::endl;
@@ -329,14 +329,14 @@ void Simulator::checkStabCond(){
 
 
 void Simulator::OVS(double Pe, int n, bool coupled){
-    this->dt = 5;
+    this->dt = 5.0;
     this -> n_fluid = n;
     this -> n_solid = n;
-    k_fluid = 2*M_PI*n_fluid/this->height;
-    k_solid = 2*M_PI*n_solid/this->height;
+    k_fluid = 2.0*M_PI*n_fluid/this->height;
+    k_solid = 2.0*M_PI*n_solid/this->height;
     if(coupled){
-        this -> n_fluid = 2;
-        this -> n_solid = 1;
+        this -> n_fluid = 2.0;
+        this -> n_solid = 1.0;
 
         std::cout << "Coupled equations OVS with Pe = " << Pe << std::endl;
     }else{
@@ -407,7 +407,7 @@ void Simulator::OVS(double Pe, int n, bool coupled){
 
             //check if steady state is attained
             if (ss_fluid == false){
-                double err = 0;
+                double err = 0.0;
                 err = L1Error(solf, oldsolf);
                 err = err/dt;
                 if(err < errThreshold){
@@ -418,7 +418,7 @@ void Simulator::OVS(double Pe, int n, bool coupled){
 
 
             if (ss_solid == false){
-                double err = 0;
+                double err = 0.0;
                 err = L1Error(sols, oldsols);
                 err = err/dt;
                 if(err < errThreshold){
@@ -503,8 +503,8 @@ double Simulator::LinfError(const std::vector<double> &numSol,const std::vector<
 double Simulator::computeStoredThermalEnergy(std::vector<double> &sols, std::vector<double> &solf){
     //trapezoidal formula
 
-    double integral_fluid = 0;
-    double integral_solid = 0;
+    double integral_fluid = 0.0;
+    double integral_solid = 0.0;
 
     for(int i = 0; i < nCells-1;++i){
         integral_fluid += (((i+1)*dx-i*dx)/2)*(solf[i+1]+solf[i]);
@@ -563,8 +563,8 @@ Simulator::Simulator(std::unordered_map<std::string, int> durations,
     k_fluid = 2*M_PI*n_fluid/this->height;
     k_solid = 2*M_PI*n_solid/this->height;
 
-    Lbc = 873;
-    Rbc = 293;
+    Lbc = 873.0;
+    Rbc = 293.0;
 
     //setting up the maximum thermal energy
     double prefactor = 0.4*1835.6*1511.8+(1-0.4)*2600*900;
